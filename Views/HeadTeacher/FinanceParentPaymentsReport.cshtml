@@ -1,0 +1,199 @@
+﻿@model IEnumerable<Diana_Litvinova_IPZ_4_0_1.Models.ParentPaymentReportViewModel>
+
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4>Звіт по оплатам від батьків</h4>
+            <div class="d-flex gap-2">
+                <input type="date" class="form-control" id="startDate" value="@ViewBag.StartDate">
+                <input type="date" class="form-control" id="endDate" value="@ViewBag.EndDate">
+                <button class="btn btn-primary" onclick="generateReport()">
+                    <i class="fas fa-sync-alt me-2"></i>Показати
+                </button>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <!-- Статистика -->
+            <div class="row mb-3">
+                <div class="col-md-3 mb-2">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body py-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">Очікувані платежі</h6>
+                                    <h4 class="mb-0">@Model.Sum(x => x.ExpectedAmount).ToString("C0")</h4>
+                                </div>
+                                <i class="fas fa-calendar-check fa-2x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-2">
+                    <div class="card bg-success text-white">
+                        <div class="card-body py-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">Отримані платежі</h6>
+                                    <h4 class="mb-0">@Model.Sum(x => x.PaidAmount).ToString("C0")</h4>
+                                </div>
+                                <i class="fas fa-money-bill-wave fa-2x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-2">
+                    <div class="card bg-danger text-white">
+                        <div class="card-body py-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">Загальний борг</h6>
+                                    <h4 class="mb-0">@Model.Sum(x => x.Debt).ToString("C0")</h4>
+                                </div>
+                                <i class="fas fa-exclamation-circle fa-2x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-2">
+                    <div class="card bg-info text-white">
+                        <div class="card-body py-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">Відсоток оплат</h6>
+                                    <h4 class="mb-0">
+                                        @(Model.Sum(x => x.ExpectedAmount) > 0 ?
+                                            (Model.Sum(x => x.PaidAmount) * 100 / Model.Sum(x => x.ExpectedAmount)).ToString("F1") : "0")%
+                                    </h4>
+                                </div>
+                                <i class="fas fa-percentage fa-2x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- График -->
+            <div class="card mb-3">
+                <div class="card-header py-2">
+                    <h5 class="mb-0">Динаміка платежів</h5>
+                </div>
+                <div class="card-body p-2" style="height: 250px;">
+                    <canvas id="paymentsChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Таблица -->
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Сім'я</th>
+                            <th>Очікувана сума</th>
+                            <th>Сплачено</th>
+                            <th>Борг</th>
+                            <th>Статус</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            var paymentPercentage = item.ExpectedAmount > 0 ?
+                            (item.PaidAmount * 100 / item.ExpectedAmount) : 0;
+
+                            <tr>
+                                <td>@item.FamilyName</td>
+                                <td>@item.ExpectedAmount.ToString("C0")</td>
+                                <td>@item.PaidAmount.ToString("C0")</td>
+                                <td>@item.Debt.ToString("C0")</td>
+                                <td>
+                                    @if (paymentPercentage >= 100)
+                                    {
+                                        <span class="badge bg-success">Сплачено</span>
+                                    }
+                                    else if (paymentPercentage >= 50)
+                                    {
+                                        <span class="badge bg-warning">Частково</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">Борг</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        function generateReport() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            if (!startDate || !endDate) {
+                alert('Будь ласка, оберіть обидві дати');
+                return;
+            }
+
+            window.location.href = `/HeadTeacher/FinanceParentPaymentsReport?startDate=${startDate}&endDate=${endDate}`;
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const chartData = @Html.Raw(ViewBag.ChartData);
+
+            new Chart(document.getElementById('paymentsChart'), {
+                type: 'line',
+                data: {
+                    labels: chartData.map(x => x.date),
+                    datasets: [{
+                        label: 'Платежі',
+                        data: chartData.map(x => x.amount),
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1,
+                        fill: true,
+                        backgroundColor: 'rgba(75, 192, 192, 0.1)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    return `Сума: ${context.raw.toLocaleString('uk-UA', {
+                                        style: 'currency',
+                                        currency: 'UAH'
+                                    })}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function (value) {
+                                    return value.toLocaleString('uk-UA', {
+                                        style: 'currency',
+                                        currency: 'UAH',
+                                        maximumFractionDigits: 0
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+}

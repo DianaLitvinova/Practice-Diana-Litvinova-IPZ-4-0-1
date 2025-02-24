@@ -1,0 +1,78 @@
+﻿@model List<Diana_Litvinova_IPZ_4_0_1.Models.InvoiceExpenseReportViewModel>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Звіт по закупівлям</h2>
+        <div class="d-flex gap-2">
+            <div class="input-group">
+                <input type="date" class="form-control" id="startDate" />
+                <span class="input-group-text">—</span>
+                <input type="date" class="form-control" id="endDate" />
+                <button class="btn btn-primary" onclick="updateReport()">
+                    <i class="fas fa-sync-alt me-2"></i>Оновити
+                </button>
+            </div>
+            <button class="btn btn-success" onclick="exportToExcel()">
+                <i class="fas fa-file-excel me-2"></i>Експорт
+            </button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>№ Накладної</th>
+                            <th>Дата</th>
+                            <th>Кухар</th>
+                            <th>Сума</th>
+                            <th>Статус</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.InvoiceId</td>
+                                <td>@item.Date.ToString("dd.MM.yyyy HH:mm")</td>
+                                <td>@item.CookName</td>
+                                <td>@item.TotalAmount.ToString("C")</td>
+                                <td>
+                                    <span class="badge @GetStatusBadgeClass(item.Status)">
+                                        @item.Status
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr class="fw-bold">
+                            <td colspan="3">Всього:</td>
+                            <td colspan="2">@Model.Sum(x => x.TotalAmount).ToString("C")</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    private string GetStatusBadgeClass(string status) =>
+        status switch
+        {
+            "Перевіряється" => "bg-warning text-dark",
+            "Ухвалено" => "bg-success",
+            "Відхилено" => "bg-danger",
+            "Товар прийнятий" => "bg-info",
+            _ => "bg-secondary"
+        };
+}
+
+@section Scripts {
+    <script>
+        // Аналогичные функции updateReport и exportToExcel
+    </script>
+}

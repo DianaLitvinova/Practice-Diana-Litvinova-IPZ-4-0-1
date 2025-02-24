@@ -1,0 +1,176 @@
+﻿@{
+    ViewData["Title"] = "Панель керування";
+}
+
+<div class="container mt-4">
+    <h2 class="text-center mb-4">Панель керування завідувача</h2>
+
+    <div class="row">
+        <!-- Управление сотрудниками -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-users text-primary me-2"></i>
+                        Співробітники
+                    </h5>
+                    <div class="card-text text-muted small mb-3">
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check me-2"></i>Перегляд та управління</li>
+                            <li><i class="fas fa-check me-2"></i>Премії та штрафи</li>
+                            <li><i class="fas fa-check me-2"></i>Зарплатня</li>
+                        </ul>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <a asp-controller="HeadTeacher" asp-action="Employees" class="btn btn-outline-primary">
+                            Управління співробітниками
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Управление накладными -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-file-invoice text-success me-2"></i>
+                        Накладні
+                    </h5>
+                    <div class="card-text text-muted small mb-3">
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check me-2"></i>Перегляд накладних</li>
+                            <li><i class="fas fa-check me-2"></i>Прийняття рішень</li>
+                            <li><i class="fas fa-check me-2"></i>Облік та оплата</li>
+                        </ul>
+                    </div>
+                    <div class="d-grid">
+                        <a asp-controller="HeadTeacher" asp-action="Invoices" class="btn btn-outline-success">
+                            Управління накладними
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Финансы -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-money-bill-wave text-warning me-2"></i>
+                        Фінанси
+                    </h5>
+                    <div class="card-text text-muted small mb-3">
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check me-2"></i>Оплати від батьків</li>
+                            <li><i class="fas fa-check me-2"></i>Заборгованості</li>
+                            <li><i class="fas fa-check me-2"></i>Фінансові звіти</li>
+                        </ul>
+                    </div>
+                    <div class="d-grid">
+                        <a asp-controller="HeadTeacher" asp-action="Finance" class="btn btn-outline-warning">
+                            Фінансові операції
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Группы -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-chalkboard-teacher text-info me-2"></i>
+                        Групи
+                    </h5>
+                    <div class="card-text text-muted small mb-3">
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check me-2"></i>Інформація про групи</li>
+                            <li><i class="fas fa-check me-2"></i>Управління цінами</li>
+                        </ul>
+                    </div>
+                    <div class="d-grid">
+                        <a asp-controller="HeadTeacher" asp-action="Groups" class="btn btn-outline-info">
+                            Управління групами
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Семьи -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-home text-info me-2"></i>
+                        Сім'ї
+                    </h5>
+                    <div class="card-text text-muted small mb-3">
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check me-2"></i>Управління сім'ями</li>
+                            <li><i class="fas fa-check me-2"></i>Відповідальні особи</li>
+                            <li><i class="fas fa-check me-2"></i>Контакти батьків</li>
+                        </ul>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <a asp-controller="HeadTeacher" asp-action="Families" class="btn btn-outline-info">
+                            Управління сім'ями
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Дети -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-child text-success me-2"></i>
+                        Діти
+                    </h5>
+                    <div class="card-text text-muted small mb-3">
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check me-2"></i>Перегляд за групами</li>
+                            <li><i class="fas fa-check me-2"></i>Переведення між групами</li>
+                            <li><i class="fas fa-check me-2"></i>Інформація про дітей</li>
+                        </ul>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <a asp-controller="HeadTeacher" asp-action="Children" class="btn btn-outline-success">
+                            Управління дітьми
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Карантин -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-head-side-mask text-danger me-2"></i>
+                        Карантин
+                    </h5>
+                    <div class="card-text text-muted small mb-3">
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check me-2"></i>Управління карантином</li>
+                            <li><i class="fas fa-check me-2"></i>Статус відвідування</li>
+                        </ul>
+                    </div>
+                    <div class="d-grid">
+                        <a asp-controller="HeadTeacher" asp-action="Quarantine" class="btn btn-outline-danger">
+                            Карантинні заходи
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

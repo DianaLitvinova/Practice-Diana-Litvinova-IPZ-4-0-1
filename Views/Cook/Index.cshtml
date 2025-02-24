@@ -1,0 +1,105 @@
+﻿@{
+    ViewData["Title"] = "Панель керування";
+}
+
+<div class="container mt-4">
+    <h2 class="text-center mb-4">Панель керування кухаря</h2>
+
+    <div class="row">
+        <!-- Протипоказання дітей -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-allergies text-danger me-2"></i>
+                        Протипоказання
+                    </h5>
+                    <div class="card-text text-muted small mb-3">
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check me-2"></i>Перегляд протипоказань дітей</li>
+                            <li><i class="fas fa-check me-2"></i>Перевірка по групах</li>
+                            <li><i class="fas fa-check me-2"></i>Алергічні обмеження</li>
+                        </ul>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <a asp-controller="Cook" asp-action="GroupContraindications" class="btn btn-outline-danger">
+                            Переглянути протипоказання
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Створення накладних -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-file-invoice text-success me-2"></i>
+                        Накладні
+                    </h5>
+                    <div class="card-text text-muted small mb-3">
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check me-2"></i>Створення накладних</li>
+                            <li><i class="fas fa-check me-2"></i>Облік товарів</li>
+                            <li><i class="fas fa-check me-2"></i>Формування списків</li>
+                        </ul>
+                    </div>
+                    <div class="d-grid">
+                        <a asp-controller="Cook" asp-action="CreateInvoice" class="btn btn-outline-success">
+                            Створити накладну
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+     @*    <!-- Перегляд товарів -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-boxes text-primary me-2"></i>
+                        Товари
+                    </h5>
+                    <div class="card-text text-muted small mb-3">
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check me-2"></i>Перегляд списку товарів</li>
+                            <li><i class="fas fa-check me-2"></i>Деталі накладних</li>
+                            <li><i class="fas fa-check me-2"></i>Пошук та фільтрація</li>
+                        </ul>
+                    </div>
+                    <div class="d-grid">
+                        <a asp-controller="Cook" asp-action="InvoiceDetails" class="btn btn-outline-primary">
+                            Переглянути товари
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+ *@
+        <!-- Прийняття товару -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-truck-loading text-warning me-2"></i>
+                        Прийом товару
+                    </h5>
+                    <div class="card-text text-muted small mb-3">
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check me-2"></i>Прийняття товарів</li>
+                            <li><i class="fas fa-check me-2"></i>Перевірка якості</li>
+                            <li><i class="fas fa-check me-2"></i>Оформлення документів</li>
+                        </ul>
+                    </div>
+                    <div class="d-grid">
+                        <a asp-controller="Cook" asp-action="AcceptInvoice" class="btn btn-outline-warning">
+                            Прийняти товар
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

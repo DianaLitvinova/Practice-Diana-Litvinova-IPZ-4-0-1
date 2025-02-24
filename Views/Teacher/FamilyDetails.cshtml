@@ -1,0 +1,140 @@
+﻿@model Diana_Litvinova_IPZ_4_0_1.Models.FamilyViewModel
+@{
+    ViewData["Title"] = "Деталі сім'ї";
+}
+
+<div class="container mt-4">
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">
+                    <i class="fas fa-users text-success me-2"></i>
+                    Інформація про сім'ю
+                </h2>
+                <a asp-action="Families" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Повернутися до списку
+                </a>
+            </div>
+
+            <!-- Основная информация о семье -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user text-primary me-2"></i>
+                        Відповідальна особа
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <p class="mb-1 text-muted">ПІБ:</p>
+                            <p class="h6">@Model.ResponsibleName</p>
+                        </div>
+                        <div class="col-md-4">
+                            <p class="mb-1 text-muted">Телефон:</p>
+                            <p class="h6">@Model.PhoneResponsible</p>
+                        </div>
+                        <div class="col-md-4">
+                            <p class="mb-1 text-muted">Адреса:</p>
+                            <p class="h6">@Model.PlaceOfResidence</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Дополнительные ответственные лица -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-users text-success me-2"></i>
+                        Додаткові відповідальні особи
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.AdditionalResponsibles?.Any() == true)
+                    {
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>ПІБ</th>
+                                        <th>Телефон</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var responsible in Model.AdditionalResponsibles)
+                                    {
+                                        <tr>
+                                            <td>@responsible.Fullname</td>
+                                            <td>@responsible.Phone</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">Додаткові відповідальні особи відсутні</p>
+                    }
+                </div>
+            </div>
+
+            <!-- Дети в семье -->
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-child text-warning me-2"></i>
+                        Діти в сім'ї
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>ПІБ дитини</th>
+                                    <th>Група</th>
+                                    <th>Дата зарахування</th>
+                                    <th>Протипоказання</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var child in Model.Children)
+                                {
+                                    <tr>
+                                        <td>@child.FullName</td>
+                                        <td>
+                                            <span class="badge bg-primary">@child.GroupName</span>
+                                        </td>
+                                        <td>@child.StartDate.ToString("dd.MM.yyyy")</td>
+                                        <td>
+                                            @if (child.Contraindications?.Any() == true)
+                                            {
+                                                foreach (var contraindication in child.Contraindications)
+                                                {
+                                                    <div class="text-warning">
+                                                        <i class="fas fa-exclamation-circle me-1"></i>
+                                                        @contraindication
+                                                    </div>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <span class="text-success">
+                                                    <i class="fas fa-check me-1"></i>
+                                                    Немає
+                                                </span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,57 @@
+﻿@model LoginViewModel
+@{
+    ViewData["Title"] = "Вхід";
+}
+<div class="login-container">
+    <div class="row justify-content-center align-items-center h-100">
+        <div class="col-md-8">
+            <div class="card login-card">
+                <div class="row g-0">
+                    <!-- Левая часть с изображением -->
+                    <div class="col-md-6 d-none d-md-block">
+                        <div class="login-image">
+                            <img src="~/images/kindergarten.jpg" alt="Kindergarten" class="img-fluid rounded-start" style="object-fit: cover; height: 100%;">
+                        </div>
+                    </div>
+                    <!-- Правая часть с формой -->
+                    <div class="col-md-6">
+                        <div class="card-body p-4">
+                            <div class="text-center mb-3">
+                                <img src="~/images/kindergarten logo.jpg" alt="Logo" class="mb-2" style="height: 60px; border-radius: 5px;">
+                                <h2 class="card-title fw-bold">Вхід в систему</h2>
+                            </div>
+                            <form asp-action="Login" method="post">
+                                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                                <div class="form-group mb-3">
+                                    <label asp-for="Username" class="control-label fw-bold">Логін</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light">
+                                            <i class="fas fa-user text-primary"></i>
+                                        </span>
+                                        <input asp-for="Username" class="form-control" placeholder="Введіть ім'я користувача" />
+                                    </div>
+                                    <span asp-validation-for="Username" class="text-danger"></span>
+                                </div>
+
+                                <div class="form-group mb-3">
+                                    <label asp-for="Password" class="control-label fw-bold">Пароль</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light">
+                                            <i class="fas fa-lock text-primary"></i>
+                                        </span>
+                                        <input asp-for="Password" class="form-control" placeholder="Введіть пароль" />
+                                    </div>
+                                    <span asp-validation-for="Password" class="text-danger"></span>
+                                </div>
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary">Увійти</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

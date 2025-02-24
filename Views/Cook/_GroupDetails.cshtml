@@ -1,0 +1,68 @@
+﻿@model GroupDetailsViewModel
+
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead class="table-light">
+            <tr>
+                <th>Дитина</th>
+                <th>Протипоказання</th>
+                <th>Заборонені продукти</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Children.Any())
+            {
+                foreach (var child in Model.Children)
+                {
+                    <tr>
+                        <td>@child.FullName</td>
+                        <td>
+                            @if (child.Contraindications.Any())
+                            {
+                                foreach (var contra in child.Contraindications)
+                                {
+                                    <div>
+                                        <i class="fas fa-exclamation-circle text-warning me-2"></i>
+                                        @contra
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div class="text-success">
+                                    <i class="fas fa-check me-2"></i>
+                                    Немає протипоказань
+                                </div>
+                            }
+                        </td>
+                        <td>
+                            @if (child.ForbiddenProducts.Any())
+                            {
+                                foreach (var product in child.ForbiddenProducts)
+                                {
+                                    <div>
+                                        <i class="fas fa-times-circle text-danger me-2"></i>
+                                        @product
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div class="text-success">
+                                    <i class="fas fa-check me-2"></i>
+                                    Немає заборонених продуктів
+                                </div>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="3" class="text-center">В групі немає дітей</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

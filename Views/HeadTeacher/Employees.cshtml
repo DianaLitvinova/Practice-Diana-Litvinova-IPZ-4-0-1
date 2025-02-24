@@ -1,0 +1,230 @@
+﻿@model List<Diana_Litvinova_IPZ_4_0_1.Models.EmployeeViewModel>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Управління співробітниками</h2>
+        <div class="d-flex gap-2">
+            <div class="input-group" style="width: 300px;">
+                <input type="text" class="form-control" id="searchInput" placeholder="Пошук співробітника...">
+                <button class="btn btn-outline-secondary" type="button" onclick="searchEmployees()">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+            <a asp-controller="HeadTeacher" asp-action="AddEmployee" class="btn btn-primary" style="align-content:center">
+                + ДОДАТИ СПІВРОБІТНИКА
+            </a>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>ПІБ</th>
+                    <th>Телефон</th>
+                    <th>Посада</th>
+                    <th>Зарплата</th>
+                    <th>Дата прийняття</th>
+                    <th>Дата звільнення</th>
+                    <th>Дії</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var employee in Model)
+                {
+                    <tr data-employee-id="@employee.Id"
+                        data-employee-name="@employee.FullName.ToLower()"
+                        data-employee-phone="@employee.Phone"
+                        data-employee-post="@employee.Post?.ToLower()">
+                        <td>
+                            <input type="text" class="form-control editable" value="@employee.FullName" data-field="fullname" />
+                        </td>
+                        <td>
+                            <input type="text" class="form-control editable" value="@employee.Phone" data-field="phone" />
+                        </td>
+                        <td>
+                            <select class="form-select editable" data-field="post">
+                                @foreach (var post in ViewBag.Posts)
+                                {
+                                    <option value="@post.Id" selected="@(post.Title == employee.Post)">
+                                        @post.Title
+                                    </option>
+                                }
+                            </select>
+                        </td>
+                        <td>@employee.Salary.ToString("C")</td>
+                        <td>@(employee.DateStart?.ToString("dd.MM.yyyy") ?? "-")</td>
+                        <td>@(employee.DateFinal?.ToString("dd.MM.yyyy") ?? "-")</td>
+                        <td>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-sm btn-success" onclick="saveChanges(@employee.Id)" title="Зберегти зміни">
+                                    <i class="fas fa-save"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-warning" onclick="showBonusModal(@employee.Id)" title="Премія/Штраф">
+                                    <i class="fas fa-coins"></i>
+                                </button>
+                                <a href="@Url.Action("EmployeeDetails", "HeadTeacher", new { id = employee.Id })"
+                                   class="btn btn-sm btn-info" title="Деталі">
+                                    <i class="fas fa-info-circle"></i>
+                                </a>
+                                <button type="button" class="btn btn-sm" style="background-color: #8B0000; color: white;" onclick="deleteEmployee(@employee.Id)" title="Видалити">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-danger" style="background-color: #dc3545; border-color: #dc3545;" onclick="dismissEmployee(@employee.Id)" title="Звільнити">
+                                    <i class="fas fa-user-times"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Модальное окно для премий/штрафов -->
+<div class="modal fade" id="bonusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Премія/Штраф</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="employeeIdForBonus" />
+                <div class="mb-3">
+                    <label class="form-label">Сума</label>
+                    <input type="number" class="form-control" id="bonusAmount" step="0.01" />
+                    <small class="form-text text-muted">Додатнє число для премії, від'ємне для штрафу</small>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Опис</label>
+                    <textarea class="form-control" id="bonusDescription" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                <button type="button" class="btn btn-primary" onclick="saveBonus()">Зберегти</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function searchEmployees() {
+            const searchValue = document.getElementById('searchInput').value.toLowerCase();
+            const rows = document.querySelectorAll('tbody tr');
+
+            rows.forEach(row => {
+                const searchText = [
+                    row.dataset.employeeName,
+                    row.dataset.employeePhone,
+                    row.dataset.employeePost
+                ].join(' ').toLowerCase();
+
+                row.style.display = searchText.includes(searchValue) ? '' : 'none';
+            });
+        }
+
+        document.getElementById('searchInput').addEventListener('keyup', searchEmployees);
+
+        function saveChanges(id) {
+            const row = document.querySelector(`tr[data-employee-id="${id}"]`);
+            const data = {
+                Id: id,
+                FullName: row.querySelector('[data-field="fullname"]').value,
+                Phone: row.querySelector('[data-field="phone"]').value,
+                Post: row.querySelector('[data-field="post"]').value
+            };
+
+            fetch('/HeadTeacher/UpdateEmployee', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        location.reload();
+                    } else {
+                        alert('Помилка при збереженні змін');
+                    }
+                });
+        }
+
+        function deleteEmployee(id) {
+            if (confirm('УВАГА! Ви збираєтесь видалити співробітника та всі пов\'язані з ним дані!\n\n' +
+                'Це видалить:\n' +
+                '- Історію посад\n' +
+                '- Премії та штрафи\n' +
+                '- Інші пов\'язані дані\n\n' +
+                'Це незворотна дія. Ви впевнені?')) {
+
+                if (confirm('Остаточне підтвердження: видалити співробітника?')) {
+                    fetch(`/HeadTeacher/DeleteEmployee/${id}`, {
+                        method: 'POST'
+                    })
+                        .then(response => response.json())
+                        .then(result => {
+                            if (result.success) {
+                                location.reload();
+                            } else {
+                                alert(result.message || 'Помилка при видаленні співробітника');
+                            }
+                        });
+                }
+            }
+        }
+
+        function showBonusModal(id) {
+            document.getElementById('employeeIdForBonus').value = id;
+            document.getElementById('bonusAmount').value = '';
+            document.getElementById('bonusDescription').value = '';
+            new bootstrap.Modal(document.getElementById('bonusModal')).show();
+        }
+
+        function saveBonus() {
+            const data = {
+                employeeId: parseInt(document.getElementById('employeeIdForBonus').value),
+                amount: parseFloat(document.getElementById('bonusAmount').value),
+                description: document.getElementById('bonusDescription').value
+            };
+
+            fetch('/HeadTeacher/AddBonus', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        location.reload();
+                    } else {
+                        alert('Помилка при збереженні премії/штрафу');
+                    }
+                    bootstrap.Modal.getInstance(document.getElementById('bonusModal')).hide();
+                });
+        }
+
+        function dismissEmployee(id) {
+            if (confirm('Ви впевнені, що хочете звільнити співробітника?')) {
+                fetch(`/HeadTeacher/DismissEmployee/${id}`, {
+                    method: 'POST'
+                })
+                    .then(response => response.json())
+                    .then(result => {
+                        if (result.success) {
+                            location.reload();
+                        } else {
+                            alert('Помилка при звільненні співробітника');
+                        }
+                    });
+            }
+        }
+    </script>
+}

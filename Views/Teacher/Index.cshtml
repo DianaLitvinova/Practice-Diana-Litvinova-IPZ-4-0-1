@@ -1,0 +1,105 @@
+﻿@{
+    ViewData["Title"] = "Панель керування";
+}
+
+<div class="container mt-4">
+    <h2 class="text-center mb-4">Панель керування вихователя</h2>
+
+    <div class="row">
+        <!-- Управління групою -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-chalkboard-teacher text-primary me-2"></i>
+                        Група
+                    </h5>
+                    <div class="card-text text-muted small mb-3">
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check me-2"></i>Інформація про групу</li>
+                            <li><i class="fas fa-check me-2"></i>Керування складом</li>
+                            <li><i class="fas fa-check me-2"></i>Додання нової групи</li>
+                        </ul>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <a asp-controller="Teacher" asp-action="GroupManagement" class="btn btn-outline-primary">
+                            Управління групою
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Управління сім'ями -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-users text-success me-2"></i>
+                        Сім'ї
+                    </h5>
+                    <div class="card-text text-muted small mb-3">
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check me-2"></i>Перегляд інформації</li>
+                            <li><i class="fas fa-check me-2"></i>Отримання описів</li>
+                            <li><i class="fas fa-check me-2"></i>Контактні дані</li>
+                        </ul>
+                    </div>
+                    <div class="d-grid">
+                        <a asp-controller="Teacher" asp-action="Families" class="btn btn-outline-success">
+                            Управління сім'ями
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Відвідування -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-calendar-check text-info me-2"></i>
+                        Відвідування
+                    </h5>
+                    <div class="card-text text-muted small mb-3">
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check me-2"></i>Облік відвідування</li>
+                            <li><i class="fas fa-check me-2"></i>Статистика присутності</li>
+                            <li><i class="fas fa-check me-2"></i>Історія відвідувань</li>
+                        </ul>
+                    </div>
+                    <div class="d-grid">
+                        <a asp-controller="Teacher" asp-action="Attendance" class="btn btn-outline-info">
+                            Облік відвідування
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Протипоказання -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-notes-medical text-danger me-2"></i>
+                        Протипоказання
+                    </h5>
+                    <div class="card-text text-muted small mb-3">
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check me-2"></i>Перегляд протипоказань</li>
+                            <li><i class="fas fa-check me-2"></i>Додання нових</li>
+                            <li><i class="fas fa-check me-2"></i>Заборонені продукти</li>
+                        </ul>
+                    </div>
+                    <div class="d-grid">
+                        <a asp-controller="Teacher" asp-action="Contraindications" class="btn btn-outline-danger">
+                            Управління протипоказаннями
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

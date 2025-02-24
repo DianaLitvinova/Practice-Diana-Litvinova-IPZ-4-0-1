@@ -1,0 +1,129 @@
+﻿@model Diana_Litvinova_IPZ_4_0_1.Models.FamilyManagementViewModel
+
+<div class="container mt-4">
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-users text-primary me-2"></i>
+                    Управління сім'ями
+                </h2>
+                <a asp-action="CreateFamily" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Додати нову сім'ю
+                </a>
+            </div>
+
+            <!-- Поиск -->
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <div class="input-group">
+                        <input type="text"
+                               class="form-control"
+                               placeholder="Пошук за ім'ям відповідальної особи..."
+                               name="searchTerm"
+                               value="@Model.SearchTerm">
+                        <button class="btn btn-primary" type="button" onclick="search()">
+                            <i class="fas fa-search me-2"></i>Пошук
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Список семей -->
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Відповідальна особа</th>
+                            <th>Телефон</th>
+                            <th>Адреса</th>
+                            <th>Додаткові відповідальні</th>
+                            <th>Діти</th>
+                            <th>Дії</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var family in Model.Families)
+                        {
+                            <tr>
+                                <td>@family.ResponsibleName</td>
+                                <td>@family.PhoneResponsible</td>
+                                <td>@family.PlaceOfResidence</td>
+                                <td>
+                                    @if (family.AdditionalResponsibles?.Any() == true)
+                                    {
+                                        foreach (var responsible in family.AdditionalResponsibles)
+                                        {
+                                            <div class="mb-1">
+                                                <small>@responsible.Fullname</small>
+                                                <br />
+                                                <small class="text-muted">@responsible.Phone</small>
+                                            </div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Немає додаткових відповідальних</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (family.Children?.Any() == true)
+                                    {
+                                        foreach (var child in family.Children)
+                                        {
+                                            <div class="mb-1">
+                                                <small>@child.FullName</small>
+                                                <br />
+                                                <small class="text-muted">Група: @child.GroupName</small>
+                                            </div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Немає дітей</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <a href="@Url.Action("EditFamily", new { id = family.Id })"
+                                           class="btn btn-sm btn-outline-primary"
+                                           title="Редагувати">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button class="btn btn-sm btn-outline-success"
+                                                onclick="addChild(@family.Id)"
+                                                title="Додати дитину">
+                                            <i class="fas fa-child"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-info"
+                                                onclick="addResponsible(@family.Id)"
+                                                title="Додати відповідальну особу">
+                                            <i class="fas fa-user-plus"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function search() {
+            const searchTerm = document.querySelector('input[name="searchTerm"]').value;
+            window.location.href = `/HeadTeacher/Families?searchTerm=${encodeURIComponent(searchTerm)}`;
+        }
+
+        function addChild(familyId) {
+            window.location.href = `/HeadTeacher/AddChild/${familyId}`;
+        }
+
+        function addResponsible(familyId) {
+            window.location.href = `/HeadTeacher/AddResponsible/${familyId}`;
+        }
+    </script>
+}

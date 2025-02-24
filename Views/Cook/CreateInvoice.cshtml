@@ -1,0 +1,184 @@
+﻿@model List<Diana_Litvinova_IPZ_4_0_1.Models.InvoiceViewModel>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Звіт по закупівлям</h2>
+        <div class="d-flex gap-2">
+            <div class="input-group">
+                <input type="date" class="form-control" id="startDate" />
+                <span class="input-group-text">—</span>
+                <input type="date" class="form-control" id="endDate" />
+                <button class="btn btn-primary" onclick="updateReport()">
+                    <i class="fas fa-sync-alt me-2"></i>Оновити
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2>Накладні</h2>
+                    <div class="d-flex gap-2">
+                        <a asp-action="NewInvoice" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Нова накладна
+                        </a>
+                        <a asp-action="ManageProducts" class="btn btn-secondary">
+                            <i class="fas fa-box me-2"></i>Управління продуктами
+                        </a>
+                    </div>
+                </div>
+                <table class="table" id="invoicesTable">
+                    <thead>
+                        <tr>
+                            <th>№ Накладної</th>
+                            <th>Дата</th>
+                            <th>Кухар</th>
+                            <th>Сума</th>
+                            <th>Статус</th>
+                            <th>Дії</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                      @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.Id</td>
+                                <td>@item.DateCreate.ToString("dd.MM.yyyy HH:mm")</td>
+                                <td>@item.CookName</td>
+                                <td>@item.TotalAmount.ToString("C")</td>
+                                <td>
+                                    <span class="badge @GetStatusBadgeClass(item.Status)">
+                                        @item.Status
+                                    </span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-info" onclick="showDetails(@item.Id)" 
+                                            title="Деталі">
+                                        <i class="fas fa-info-circle"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для деталей -->
+<div class="modal fade" id="detailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Деталі накладної</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="detailsContent"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    private string GetStatusBadgeClass(string status) =>
+        status switch
+        {
+            "Перевіряється" => "bg-warning text-dark",
+            "Ухвалено" => "bg-success",
+            "Відхилено" => "bg-danger",
+            "Товар прийнятий" => "bg-info",
+            _ => "bg-secondary"
+        };
+}
+
+@section Scripts {
+    <script>
+        function updateReport() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            if (!startDate || !endDate) {
+                alert('Виберіть обидві дати');
+                return;
+            }
+
+            const data = {
+                dateCreate: startDate,
+                dateAccept: endDate
+            };
+
+            fetch('/Cook/UpdateReport', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                updateTable(data);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                //alert('Помилка при оновленні даних');
+            });
+        }
+
+        function showDetails(invoiceId) {
+            fetch(`/Cook/GetInvoiceDetails/${invoiceId}`)
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('detailsContent').innerHTML = html;
+                    const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
+                    modal.show();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Помилка при завантаженні деталей');
+                });
+        }
+
+        function updateTable(data) {
+            const tbody = document.querySelector('#invoicesTable tbody');
+            const tfoot = document.querySelector('#invoicesTable tfoot');
+            let html = '';
+            let total = 0;
+
+            data.forEach(item => {
+                total += item.totalAmount;
+                html += `
+                    <tr>
+                        <td>${item.invoiceId}</td>
+                        <td>${new Date(item.date).toLocaleString('uk-UA')}</td>
+                        <td>${item.cookName}</td>
+                        <td>${item.totalAmount.toLocaleString('uk-UA', { style: 'currency', currency: 'UAH' })}</td>
+                        <td><span class="badge ${getStatusBadgeClass(item.status)}">${item.status}</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-info" onclick="showDetails(${item.invoiceId})" 
+                                    title="Деталі">
+                                <i class="fas fa-info-circle"></i>
+                            </button>
+                        </td>
+                    </tr>`;
+            });
+
+            tbody.innerHTML = html;
+            tfoot.querySelector('td:last-child').textContent = 
+                total.toLocaleString('uk-UA', { style: 'currency', currency: 'UAH' });
+        }
+
+        function getStatusBadgeClass(status) {
+            switch (status) {
+                case 'Перевіряється': return 'bg-warning text-dark';
+                case 'Ухвалено': return 'bg-success';
+                case 'Відхилено': return 'bg-danger';
+                case 'Товар прийнятий': return 'bg-info';
+                default: return 'bg-secondary';
+            }
+        }
+    </script>
+}

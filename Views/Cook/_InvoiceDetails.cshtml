@@ -1,0 +1,40 @@
+﻿@model List<Diana_Litvinova_IPZ_4_0_1.Models.InvoiceProductViewModel>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Продукт</th>
+            <th>Одиниця виміру</th>
+            <th>Кількість</th>
+            <th>Ціна</th>
+            <th>Сума</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var product in Model)
+        {
+            <tr>
+                <td>@product.ProductName</td>
+                <td>@product.Measure</td>
+                <td>@product.Amount</td>
+                <td>@(product.Cost?.ToString("C") ?? "-")</td>
+                <td>
+                    @if (product.Cost.HasValue)
+                    {
+                        @((product.Amount * product.Cost.Value).ToString("C"))
+                    }
+                    else
+                    {
+                        @:-
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+    <tfoot>
+        <tr class="fw-bold">
+            <td colspan="4" class="text-end">Всього:</td>
+            <td>@Model.Where(p => p.Cost.HasValue).Sum(p => p.Amount * p.Cost.Value).ToString("C")</td>
+        </tr>
+    </tfoot>
+</table>

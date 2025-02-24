@@ -1,0 +1,214 @@
+﻿@model IEnumerable<Diana_Litvinova_IPZ_4_0_1.Models.SalaryReportViewModel>
+
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4>Звіт по зарплатам</h4>
+            <div class="d-flex gap-2">
+                <input type="date" class="form-control" id="startDate" value="@ViewData["StartDate"]">
+                <input type="date" class="form-control" id="endDate" value="@ViewData["EndDate"]">
+                <button class="btn btn-primary" onclick="generateReport()">
+                    <i class="fas fa-sync-alt me-2"></i>Показати
+                </button>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <!-- Статистика -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <h6>Загальний фонд</h6>
+                            <h3>@(((decimal)ViewData["TotalSalaryFund"]).ToString("C0"))</h3>
+                            <small>За обраний період</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <h6>Премії</h6>
+                            <h3>@(((decimal)ViewData["TotalBonuses"]).ToString("C0"))</h3>
+                            <small>@(((decimal)ViewData["BonusPercent"]).ToString("F1"))% від фонду</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-danger text-white">
+                        <div class="card-body">
+                            <h6>Штрафи</h6>
+                            <h3>@(((decimal)ViewData["TotalFines"]).ToString("C0"))</h3>
+                            <small>@(((decimal)ViewData["FinesPercent"]).ToString("F1"))% від фонду</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <h6>Середня зарплата</h6>
+                            <h3>@(((decimal)ViewData["AverageSalary"]).ToString("C0"))</h3>
+                            <small>По всім посадам</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Графики -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5>Розподіл по посадах</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="positionChart" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5>Структура зарплат</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="salaryStructureChart" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Таблица -->
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Співробітник</th>
+                            <th>Посада</th>
+                            <th>Базова ставка</th>
+                            <th>Премії</th>
+                            <th>Штрафи</th>
+                            <th>Всього</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            var bonuses = Math.Max(0, item.BonusesAndFines);
+                            var fines = Math.Abs(Math.Min(0, item.BonusesAndFines));
+
+                            <tr>
+                                <td>@item.EmployeeName</td>
+                                <td>@item.Position</td>
+                                <td>@item.BaseSalary.ToString("C0")</td>
+                                <td class="text-success">@bonuses.ToString("C0")</td>
+                                <td class="text-danger">@fines.ToString("C0")</td>
+                                <td><strong>@item.TotalSalary.ToString("C0")</strong></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        function generateReport() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            if (!startDate || !endDate) {
+                alert('Будь ласка, оберіть обидві дати');
+                return;
+            }
+
+            window.location.href = `/HeadTeacher/FinanceSalaryReport?startDate=${startDate}&endDate=${endDate}`;
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // График по должностям
+            const positionData = @Html.Raw(ViewData["PositionData"]);
+            new Chart(document.getElementById('positionChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: positionData.map(x => x.position),
+                    datasets: [{
+                        data: positionData.map(x => x.total),
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.8)',
+                            'rgba(54, 162, 235, 0.8)',
+                            'rgba(255, 206, 86, 0.8)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const value = context.raw;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((value * 100) / total).toFixed(1);
+                                    return `${context.label}: ${percentage}% (${value.toLocaleString('uk-UA', {
+                                        style: 'currency',
+                                        currency: 'UAH'
+                                    })})`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // График структуры зарплат
+            const salaryData = {
+                labels: ['Базові ставки', 'Премії', 'Штрафи'],
+                datasets: [{
+                    data: [
+        @(Model.Sum(x => x.BaseSalary)),
+        @(Model.Sum(x => Math.Max(0, x.BonusesAndFines))),
+        @(Math.Abs(Model.Sum(x => Math.Min(0, x.BonusesAndFines))))
+                            ],
+                    backgroundColor: [
+                        'rgba(54, 162, 235, 0.8)',
+                        'rgba(75, 192, 192, 0.8)',
+                        'rgba(255, 99, 132, 0.8)'
+                    ]
+                }]
+            };
+
+            new Chart(document.getElementById('salaryStructureChart'), {
+                type: 'pie',
+                data: salaryData,
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    const value = context.raw;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? ((value * 100) / total).toFixed(1) : 0;
+                                    return `${context.label}: ${percentage}% (${value.toLocaleString('uk-UA', {
+                                        style: 'currency',
+                                        currency: 'UAH'
+                                    })})`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+}

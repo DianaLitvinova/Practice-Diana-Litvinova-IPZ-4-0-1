@@ -1,0 +1,185 @@
+﻿@model AttendanceViewModel
+@{
+    ViewData["Title"] = "Статистика відвідування";
+}
+
+<div class="container mt-4">
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <h2 class="mb-4">
+                <i class="fas fa-chart-line text-primary me-2"></i>
+                Статистика відвідування
+            </h2>
+
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <label class="form-label">Група</label>
+                    <select id="groupSelect" class="form-select">
+                        @foreach (var group in Model.TeacherGroups)
+                        {
+                            <option value="@group.Id" selected="@(group.Id == Model.SelectedGroupId)">
+                                @group.Name
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Період</label>
+                    <select id="periodSelect" class="form-select">
+                        <option value="day" selected="@(Model.Period == "day")">День</option>
+                        <option value="week" selected="@(Model.Period == "week")">Тиждень</option>
+                        <option value="month" selected="@(Model.Period == "month")">Місяць</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Початкова дата</label>
+                    <input type="date" id="startDate" class="form-control"
+                           value="@Model.StartDate.ToString("yyyy-MM-dd")">
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Кінцева дата</label>
+                    <input type="date" id="endDate" class="form-control"
+                           value="@Model.EndDate.ToString("yyyy-MM-dd")">
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="btn-group" role="group">
+                        <input type="radio" class="btn-check" name="displayType" id="absolute" checked>
+                        <label class="btn btn-outline-primary" for="absolute">Кількість</label>
+
+                        <input type="radio" class="btn-check" name="displayType" id="percentage">
+                        <label class="btn btn-outline-primary" for="percentage">Відсотки</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    <div style="height: 400px">
+                        <canvas id="attendanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let chart = null;
+
+        function updateChart(data, isPercentage) {
+            const ctx = document.getElementById('attendanceChart').getContext('2d');
+
+            if (chart) {
+                chart.destroy();
+            }
+
+            const datasets = [];
+            const total = data.labels.map((_, i) =>
+                data.present[i] + data.absent[i] + data.sick[i] + data.weekend[i]);
+
+            const calculateValue = (value, index) => {
+                if (isPercentage) {
+                    return total[index] > 0 ? (value / total[index] * 100) : 0;
+                }
+                return value;
+            };
+
+            datasets.push({
+                label: 'Присутні',
+                data: data.present.map((value, i) => calculateValue(value, i)),
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                hidden: false
+            });
+
+            datasets.push({
+                label: 'Відсутні',
+                data: data.absent.map((value, i) => calculateValue(value, i)),
+                borderColor: 'rgb(255, 99, 132)',
+                backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                hidden: false
+            });
+
+            datasets.push({
+                label: 'На лікарняному',
+                data: data.sick.map((value, i) => calculateValue(value, i)),
+                borderColor: 'rgb(255, 205, 86)',
+                backgroundColor: 'rgba(255, 205, 86, 0.5)',
+                hidden: false
+            });
+
+            datasets.push({
+                label: 'Вихідний',
+                data: data.weekend.map((value, i) => calculateValue(value, i)),
+                borderColor: 'rgb(54, 162, 235)',
+                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                hidden: false
+            });
+
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Відвідуваність'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: isPercentage ? 100 : undefined
+                        }
+                    }
+                }
+            });
+        }
+
+        async function loadData() {
+            const groupId = document.getElementById('groupSelect').value;
+            const period = document.getElementById('periodSelect').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const isPercentage = document.getElementById('percentage').checked;
+
+            try {
+                const response = await fetch(`/Teacher/GetAttendanceData?groupId=${groupId}&period=${period}&startDate=${startDate}&endDate=${endDate}`);
+                const data = await response.json();
+                updateChart(data, isPercentage);
+            } catch (error) {
+                console.error('Error loading data:', error);
+                alert('Помилка завантаження даних');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            loadData();
+
+            ['groupSelect', 'periodSelect', 'startDate', 'endDate'].forEach(id => {
+                document.getElementById(id).addEventListener('change', loadData);
+            });
+
+            document.querySelectorAll('input[name="displayType"]').forEach(radio => {
+                radio.addEventListener('change', loadData);
+            });
+        });
+    </script>
+}

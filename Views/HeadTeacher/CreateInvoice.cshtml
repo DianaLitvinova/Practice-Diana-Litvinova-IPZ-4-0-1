@@ -1,0 +1,87 @@
+﻿<div class="container mt-4">
+    <h2>Створення накладної</h2>
+    <form asp-action="CreateInvoicePost" method="post">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Товари</h5>
+                <div id="itemsContainer"></div>
+                <button type="button" class="btn btn-secondary mt-3" onclick="addItem()">
+                    <i class="fas fa-plus me-2"></i>Додати товар
+                </button>
+            </div>
+        </div>
+        <div class="mt-4 text-end">
+            <a asp-action="Invoices" class="btn btn-secondary me-2">Скасувати</a>
+            <button type="submit" class="btn btn-primary">Створити накладну</button>
+        </div>
+    </form>
+</div>
+
+<template id="itemTemplate">
+    <div class="row mb-3 item-row">
+        <div class="col-md-4">
+            <label class="form-label">Товар</label>
+            <select name="Items[{index}].ProductId" class="form-select product-select" required>
+                <option value="">Виберіть товар</option>
+                @foreach (var product in ViewBag.Products)
+                {
+                    <option value="@product.Id">@product.Name</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Одиниця виміру</label>
+            <select name="Items[{index}].Measure" class="form-select" required>
+                <option value="">Виберіть одиницю</option>
+                <option value="Кг">Кілограми</option>
+                <option value="Л">Літри</option>
+                <option value="Шт">Штуки</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Кількість</label>
+            <input type="number" name="Items[{index}].Amount" class="form-control invoice-form-control" required min="0.01" step="0.01" />
+        </div>
+        <div class="col-md-2">
+            <button type="button" class="btn btn-danger d-block w-100" onclick="removeItem(this)">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    </div>
+</template>
+
+@section Scripts {
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        let itemIndex = 0;
+
+        function initializeSelect2(element) {
+            $(element).select2({
+                placeholder: "Оберіть товар...",
+                allowClear: true,
+                width: '100%'
+            });
+        }
+
+        function addItem() {
+            const template = document.getElementById('itemTemplate').innerHTML;
+            const container = document.getElementById('itemsContainer');
+            container.insertAdjacentHTML('beforeend', template.replace(/{index}/g, itemIndex++));
+
+            // Инициализируем Select2 для нового элемента
+            const newSelect = container.lastElementChild.querySelector('.product-select');
+            initializeSelect2(newSelect);
+        }
+
+        function removeItem(button) {
+            button.closest('.item-row').remove();
+        }
+
+        // Инициализация первого элемента при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function () {
+            addItem();
+        });
+    </script>
+}

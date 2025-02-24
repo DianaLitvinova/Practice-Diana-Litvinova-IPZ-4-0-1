@@ -1,0 +1,185 @@
+﻿@model List<ProductViewModel>
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Управління продуктами</h2>
+        <div class="d-flex gap-2">
+            <div class="input-group" style="width: 300px;">
+                <input type="text" class="form-control" id="searchInput" placeholder="Пошук продукту...">
+                <button class="btn btn-outline-secondary" type="button" onclick="searchProducts()">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                <i class="fas fa-plus me-2"></i>Додати продукт
+            </button>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Назва</th>
+                    <th>Дії</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var product in Model)
+                {
+                    <tr>
+                        <td>@product.Id</td>
+                        <td>@product.Name</td>
+                        <td>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-sm btn-primary" 
+                                        onclick="editProduct(@product.Id, '@product.Name')"
+                                        title="Редагувати">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-danger" 
+                                        onclick="deleteProduct(@product.Id)"
+                                        title="Видалити">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Модальное окно добавления продукта -->
+<div class="modal fade" id="addProductModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Додати продукт</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form asp-action="AddProduct" method="post">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Назва продукту</label>
+                        <input type="text" name="Name" class="form-control" required maxlength="32" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрити</button>
+                    <button type="submit" class="btn btn-primary">Додати</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно редактирования продукта -->
+<div class="modal fade" id="editProductModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Редагувати продукт</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editProductId" />
+                <div class="mb-3">
+                    <label class="form-label">Назва продукту</label>
+                    <input type="text" id="editProductName" class="form-control" required maxlength="32" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрити</button>
+                <button type="button" class="btn btn-primary" onclick="updateProduct()">Зберегти</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+        function editProduct(id, name) {
+            document.getElementById('editProductId').value = id;
+            document.getElementById('editProductName').value = name;
+            new bootstrap.Modal(document.getElementById('editProductModal')).show();
+        }
+
+        function searchProducts() {
+            const searchValue = document.getElementById('searchInput').value.toLowerCase();
+            const rows = document.querySelectorAll('tbody tr');
+
+            rows.forEach(row => {
+                const name = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+                row.style.display = name.includes(searchValue) ? '' : 'none';
+            });
+        }
+
+        function addProduct() {
+            const name = document.getElementById('newProductName').value;
+            
+            fetch('/Cook/AddProduct', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'RequestVerificationToken': token
+                },
+                body: `name=${encodeURIComponent(name)}`
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    location.reload();
+                } else {
+                    alert(result.message || 'Помилка при додаванні продукту');
+                }
+            });
+        }
+
+        function updateProduct() {
+            const id = document.getElementById('editProductId').value;
+            const name = document.getElementById('editProductName').value;
+
+            fetch('/Cook/UpdateProduct', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token
+                },
+                body: JSON.stringify({ id, name })
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    location.reload();
+                } else {
+                    alert(result.message || 'Помилка при оновленні продукту');
+                }
+            });
+        }
+
+        function deleteProduct(id) {
+            if (confirm('Ви впевнені, що хочете видалити цей продукт?')) {
+                fetch(`/Cook/DeleteProduct/${id}`, {
+                    method: 'POST',
+                    headers: {
+                        'RequestVerificationToken': token
+                    }
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        location.reload();
+                    } else {
+                        alert(result.message || 'Помилка при видаленні продукту');
+                    }
+                });
+            }
+        }
+
+        document.getElementById('searchInput').addEventListener('keyup', searchProducts);
+    </script>
+}

@@ -1,0 +1,310 @@
+﻿@model Diana_Litvinova_IPZ_4_0_1.Models.QuarantineViewModel
+
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h4>Моніторинг відвідуваності та карантину</h4>
+        </div>
+        <div class="card-body">
+            <!-- Статистика -->
+            <div class="row mb-3">
+                <div class="col-md-4 mb-2">
+                    <div class="card @(Model.OverallAttendancePercentage < 60 ? "bg-danger" : "bg-success") text-white">
+                        <div class="card-body py-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">Загальна відвідуваність</h6>
+                                    <h4 class="mb-0">@Model.OverallAttendancePercentage.ToString("F1")%</h4>
+                                </div>
+                                <i class="fas fa-chart-line fa-2x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-2">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body py-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">Відсутні діти</h6>
+                                    <h4 class="mb-0">@Model.TotalAbsentChildren з @Model.Groups.Sum(g => g.TotalChildren)</h4>
+                                </div>
+                                <i class="fas fa-user-slash fa-2x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-2">
+                    <div class="card bg-warning text-dark">
+                        <div class="card-body py-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">Групи під загрозою</h6>
+                                    <h4 class="mb-0">@Model.Groups.Count(g => g.RequiresQuarantine) з @Model.Groups.Count</h4>
+                                </div>
+                                <i class="fas fa-exclamation-triangle fa-2x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- График -->
+            <div class="card mb-3">
+                <div class="card-header py-2">
+                    <h5 class="mb-0">Динаміка відвідуваності за останні 7 днів</h5>
+                </div>
+                <div class="card-body p-2" style="height: 250px;">
+                    <canvas id="attendanceChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Таблица -->
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Група</th>
+                            <th>Вихователь</th>
+                            <th>На лікарняному</th>
+                            <th>Відсутні</th>
+                            <th>Відвідуваність</th>
+                            <th>Статус</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var group in Model.Groups.OrderBy(g => g.AttendancePercentage))
+                        {
+                            <tr class="@(group.RequiresQuarantine ? "table-danger" : "")">
+                                <td>
+                                    <strong>@group.GroupName</strong>
+                                </td>
+                                <td>@group.TeacherName</td>
+                                <td>
+                                    <span class="text-warning">
+                                        @group.SickChildren з @group.TotalChildren
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="text-danger">
+                                        @(group.AbsentChildren - group.SickChildren) з @group.TotalChildren
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress flex-grow-1" style="height: 8px;">
+                                            <div class="progress-bar @(group.RequiresQuarantine ? "bg-danger" :
+                                                        group.SickChildren > group.TotalChildren / 2 ? "bg-warning" :
+                                                        "bg-success")"
+                                                 role="progressbar"
+                                                 style="width: @group.AttendancePercentage%">
+                                            </div>
+                                        </div>
+                                        <span class="ms-2">@group.AttendancePercentage.ToString("F1")%</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    @if (group.RequiresQuarantine)
+                                    {
+                                        <span class="badge bg-danger">Рекомендовано карантин</span>
+                                    }
+                                    else if (group.SickChildren > group.TotalChildren / 3)
+                                    {
+                                        <span class="badge bg-warning">Підвищена захворюваність</span>
+                                    }
+                                    else if (group.SickChildren > 0)
+                                    {
+                                        <span class="badge bg-info">Є хворі</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">Нормально</span>
+                                    }
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-info"
+                                            onclick="showAbsentDetails(@group.GroupId, '@group.GroupName')">
+                                        <i class="fas fa-info-circle"></i> Деталі
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно -->
+<div class="modal fade" id="absentDetailsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Відсутні діти - <span id="modalGroupName"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="absentChildrenList" class="list-group list-group-flush">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const stats = @Html.Raw(Json.Serialize(Model.AttendanceStats));
+            const ctx = document.getElementById('attendanceChart');
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: stats.map(x => new Date(x.date).toLocaleDateString('uk-UA')),
+                    datasets: [
+                        {
+                            label: 'Відвідуваність',
+                            data: stats.map(x => x.attendancePercentage),
+                            borderColor: 'rgb(75, 192, 192)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                            tension: 0.1,
+                            fill: true
+                        },
+                        {
+                            label: 'На лікарняному',
+                            data: stats.map(x => x.sickPercentage),
+                            borderColor: 'rgb(255, 159, 64)',
+                            backgroundColor: 'rgba(255, 159, 64, 0.1)',
+                            tension: 0.1,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: function (context) {
+                                    return context.dataset.label + ': ' +
+                                        context.raw.toFixed(1) + '%';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'Дата'
+                            }
+                        },
+                        y: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: 'Відсоток'
+                            },
+                            min: 0,
+                            max: 100,
+                            ticks: {
+                                callback: function (value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                    }
+                }
+            });
+        });
+
+        // Функция для показа деталей отсутствующих
+        function showAbsentDetails(groupId, groupName) {
+            try {
+                const groups = @Html.Raw(Json.Serialize(Model.Groups));
+                const group = groups.find(g => g.groupId === groupId);
+
+                if (!group) {
+                    console.error('Group not found:', groupId);
+                    return;
+                }
+
+                const modalTitleElement = document.getElementById('modalGroupName');
+                const listElement = document.getElementById('absentChildrenList');
+
+                if (!modalTitleElement || !listElement) {
+                    console.error('Required elements not found');
+                    return;
+                }
+
+                modalTitleElement.textContent = groupName;
+                listElement.innerHTML = '';
+
+                if (group.absentChildrenDetails && group.absentChildrenDetails.length > 0) {
+                    // Создаем список отсутствующих детей
+                    const createListItem = (child) => {
+                        const daysText = getDaysWord(child.consecutiveAbsentDays);
+                        return `
+                                    <div class="list-group-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="mb-0">${child.childName}</h6>
+                                                <small class="text-muted">
+                                                    Відсутній ${child.consecutiveAbsentDays} ${daysText}
+                                                </small>
+                                            </div>
+                                            <span class="badge bg-secondary">${child.status}</span>
+                                        </div>
+                                    </div>`;
+                    };
+
+                    const itemsHtml = group.absentChildrenDetails
+                        .map(child => createListItem(child))
+                        .join('');
+                    listElement.innerHTML = itemsHtml;
+                } else {
+                    listElement.innerHTML = '<div class="text-center p-3 text-muted">Немає відсутніх дітей</div>';
+                }
+
+                const modal = new bootstrap.Modal(document.getElementById('absentDetailsModal'));
+                modal.show();
+            } catch (error) {
+                console.error('Error showing absent details:', error);
+            }
+        }
+
+        // Вспомогательная функция для правильного склонения слова "день"
+        function getDaysWord(number) {
+            if (number >= 11 && number <= 14) {
+                return 'днів';
+            }
+
+            const lastDigit = number % 10;
+            switch (lastDigit) {
+                case 1:
+                    return 'день';
+                case 2:
+                case 3:
+                case 4:
+                    return 'дні';
+                default:
+                    return 'днів';
+            }
+        }
+    </script>
+}

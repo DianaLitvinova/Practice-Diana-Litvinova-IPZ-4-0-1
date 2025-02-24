@@ -1,0 +1,184 @@
+﻿@model GroupViewModel
+@{
+    ViewData["Title"] = "Облік відвідування";
+}
+
+<div class="container mt-4">
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">
+                    <i class="fas fa-calendar-check text-primary me-2"></i>
+                    Облік відвідування групи "@Model.Name"
+                </h2>
+                <div>
+                    <div class="text-muted">
+                        Дата: @DateTime.Now.ToString("dd.MM.yyyy")
+                    </div>
+                    <div class="text-end mt-2">
+                        Присутні: <span id="presentCounter">@Model.Children.Count(c => c.AttendanceStatus == "Присутній") / @Model.Children.Count</span>
+                        <span id="presentPercentage">(@(((double)Model.Children.Count(c => c.AttendanceStatus == "Присутній") / Model.Children.Count * 100).ToString("F0"))%)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th style="width: 25%">ПІБ дитини</th>
+                            <th style="width: 25%">Батьки</th>
+                            <th style="width: 25%">Протипоказання</th>
+                            <th style="width: 25%">Статус відвідування</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var child in Model.Children)
+                        {
+                            <tr>
+                                <td>@child.FullName</td>
+                                <td>@child.FamilyName</td>
+                                <td>
+                                    @if (child.Contraindications.Any())
+                                    {
+                                        foreach (var contraindication in child.Contraindications)
+                                        {
+                                            <div class="text-warning">
+                                                <i class="fas fa-exclamation-circle me-1"></i>
+                                                @contraindication
+                                            </div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-success">
+                                            <i class="fas fa-check me-1"></i>
+                                            Немає
+                                        </span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="btn-group attendance-buttons" role="group" data-child-id="@child.Id" data-original-status="@child.AttendanceStatus">
+                                        @{
+                                            var statuses = new[] { "Присутній", "Відсутній", "На лікарняному", "Вихідний" };
+                                            var btnClasses = new Dictionary<string, string> {
+                                                { "Присутній", "btn-outline-success" },
+                                                { "Відсутній", "btn-outline-danger" },
+                                                { "На лікарняному", "btn-outline-warning" },
+                                                { "Вихідний", "btn-outline-info" }
+                                            };
+                                            var icons = new Dictionary<string, string> {
+                                                { "Присутній", "check" },
+                                                { "Відсутній", "times" },
+                                                { "На лікарняному", "hospital" },
+                                                { "Вихідний", "calendar" }
+                                            };
+                                        }
+                                        @foreach (var status in statuses)
+                                        {
+                                            <button type="button" 
+                                                    class="btn @btnClasses[status] @(child.AttendanceStatus == status ? "active" : "")"
+                                                    onclick="updateStatus(@child.Id, '@status')"
+                                                    title="@status">
+                                                <i class="fas fa-@icons[status] me-1"></i>@status
+                                            </button>
+                                        }
+                                    </div>
+                                    <div class="spinner-border spinner-border-sm text-primary d-none" 
+                                         role="status" id="spinner-@child.Id">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-4 d-flex justify-content-between">
+                <a asp-action="GroupManagement" asp-route-groupId="@Model.Id" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Повернутися до групи
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        async function updateStatus(childId, status) {
+            const spinner = document.getElementById(`spinner-${childId}`);
+            const btnGroup = spinner.previousElementSibling;
+
+            try {
+                btnGroup.style.display = 'none';
+                spinner.classList.remove('d-none');
+
+                const response = await fetch('/Teacher/UpdateAttendance', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify([{
+                        childId: childId,
+                        status: status
+                    }])
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                if (result.success) {
+                    btnGroup.querySelectorAll('button').forEach(btn => {
+                        btn.classList.remove('active');
+                        if (btn.textContent.trim().includes(status)) {
+                            btn.classList.add('active');
+                        }
+                    });
+
+                    updateCounters();
+                } else {
+                    throw new Error(result.message || 'Невідома помилка');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Помилка при збереженні статусу: ' + error.message);
+            } finally {
+                btnGroup.style.display = 'inline-flex';
+                spinner.classList.add('d-none');
+            }
+        }
+
+        function updateCounters() {
+            const activeButtons = Array.from(document.querySelectorAll('.attendance-buttons button.active'));
+            const totalCount = document.querySelectorAll('.attendance-buttons').length;
+            const presentCount = activeButtons.filter(btn => btn.textContent.includes('Присутній')).length;
+
+            const counter = document.getElementById('presentCounter');
+            const percentage = document.getElementById('presentPercentage');
+            
+            if (counter) counter.textContent = `${presentCount} / ${totalCount}`;
+            if (percentage) percentage.textContent = `(${Math.round(presentCount / totalCount * 100)}%)`;
+        }
+
+        function showStatistics() {
+            const modal = new bootstrap.Modal(document.getElementById('statisticsModal'));
+            modal.show();
+            
+            fetch(`/Teacher/GetAttendanceStatistics?groupId=@Model.Id&period=day`)
+                .then(response => response.text())
+                .then(html => {
+                    document.querySelector('.modal-body').innerHTML = html;
+                })
+                .catch(error => {
+                    console.error('Помилка при завантаженні статистики:', error);
+                    alert('Помилка при завантаженні статистики');
+                });
+        }
+    </script>
+}

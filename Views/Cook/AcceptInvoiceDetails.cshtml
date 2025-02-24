@@ -1,0 +1,163 @@
+﻿@model InvoiceViewModel
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Прийняття накладної #@Model.Id</h2>
+        <a asp-action="AcceptInvoice" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Повернутися
+        </a>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <dl class="row">
+                        <dt class="col-sm-4">Дата створення</dt>
+                        <dd class="col-sm-8">@Model.DateCreate.ToString("dd.MM.yyyy HH:mm")</dd>
+
+                        <dt class="col-sm-4">Кухар</dt>
+                        <dd class="col-sm-8">@Model.CookName</dd>
+
+                        <dt class="col-sm-4">Завідуючий</dt>
+                        <dd class="col-sm-8">@Model.HeadTeacherName</dd>
+
+                        <dt class="col-sm-4">Дата підтвердження</dt>
+                        <dd class="col-sm-8">@(Model.DateAccept?.ToString("dd.MM.yyyy HH:mm") ?? "-")</dd>
+
+                        <dt class="col-sm-4">Статус</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge @GetStatusBadgeClass(Model.Status)">@Model.Status</span>
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Продукт</th>
+                            <th>Одиниця виміру</th>
+                            <th>Замовлена кількість</th>
+                            <th>Фактична кількість</th>
+                            <th>Ціна за одиницю</th>
+                            <th>Сума</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < Model.Products.Count; i++)
+                        {
+                            <tr>
+                                <td>
+                                    @Model.Products[i].ProductName
+                                    <input type="hidden" class="product-id" value="@Model.Products[i].ProductId" />
+                                </td>
+                                <td>@Model.Products[i].Measure</td>
+                                <td>@Model.Products[i].Amount</td>
+                                <td>
+                                    <input type="number" class="form-control actual-amount" 
+                                           value="@Model.Products[i].Amount" min="0" 
+                                           step="@(Model.Products[i].Measure == "Шт" ? "1" : "0.01")" />
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control cost" 
+                                           placeholder="Ціна" min="0" step="0.01" />
+                                </td>
+                                <td class="product-total">-</td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="5" class="text-end"><strong>Загальна сума:</strong></td>
+                            <td id="totalAmount" class="fw-bold">0.00 ₴</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <div class="text-end mt-4">
+                <button type="button" class="btn btn-primary" onclick="acceptInvoice()">
+                    <i class="fas fa-check me-2"></i>Підтвердити прийняття
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    private string GetStatusBadgeClass(string status) =>
+        status switch
+        {
+            "Перевіряється" => "bg-warning text-dark",
+            "Ухвалено" => "bg-success",
+            "Відхилено" => "bg-danger",
+            "Товар прийнятий" => "bg-info",
+            _ => "bg-secondary"
+        };
+}
+
+@section Scripts {
+    <script>
+        // Обновление итоговой суммы при изменении количества или цены
+        function updateTotals() {
+            let total = 0;
+            const rows = document.querySelectorAll('tbody tr');
+            
+            rows.forEach(row => {
+                const actualAmount = parseFloat(row.querySelector('.actual-amount').value) || 0;
+                const cost = parseFloat(row.querySelector('.cost').value) || 0;
+                const productTotal = actualAmount * cost;
+                
+                row.querySelector('.product-total').textContent = productTotal.toFixed(2) + ' ₴';
+                total += productTotal;
+            });
+            
+            document.getElementById('totalAmount').textContent = total.toFixed(2) + ' ₴';
+        }
+
+        // Добавляем обработчики событий
+        document.querySelectorAll('.actual-amount, .cost').forEach(input => {
+            input.addEventListener('input', updateTotals);
+        });
+
+        function acceptInvoice() {
+            const rows = document.querySelectorAll('tbody tr');
+            const products = Array.from(rows).map(row => ({
+                productId: parseInt(row.querySelector('.product-id').value),
+                actualAmount: parseFloat(row.querySelector('.actual-amount').value),
+                cost: parseFloat(row.querySelector('.cost').value) || 0
+            }));
+
+            const data = {
+                id: @Model.Id,
+                products: products
+            };
+
+            fetch('/Cook/AcceptInvoice', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    window.location.href = '/Cook/AcceptInvoice';
+                } else {
+                    throw new Error(result.error || 'Помилка при збереженні');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Помилка при збереженні: ' + error.message);
+            });
+        }
+    </script>
+}

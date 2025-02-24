@@ -1,0 +1,42 @@
+﻿@{
+    ViewData["Title"] = "Головна";
+}
+<div class="text-center">
+    <h1 class="display-4">Вітаємо в системі управління дитячим садком!</h1>
+    @if (ViewBag.Username != null)
+    {
+        <div class="row justify-content-center mt-4">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Панель управління</h5>
+                        <p class="card-text">Ласкаво просимо, @ViewBag.Username!</p>
+
+                        @if (Context.Session.GetString("Role") == "head_teacher")
+                        {
+                            <a asp-controller="HeadTeacher" asp-action="Index" class="btn btn-primary">
+                                Перейти до панелі керування завідувача
+                            </a>
+                        }
+                        else if (Context.Session.GetString("Role") == "teacher")
+                        {
+                            <a asp-controller="Teacher" asp-action="Index" class="btn btn-primary">
+                                Перейти до панелі керування вихователя
+                            </a>
+                        }
+                        else if (Context.Session.GetString("Role") == "cook")
+                        {
+                            <a asp-controller="Cook" asp-action="Index" class="btn btn-primary">
+                                Перейти до панелі керування кухаря
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <p class="mt-4">Для доступу до системи, будь ласка, <a asp-controller="Account" asp-action="Login">увійдіть</a> в свій обліковий запис.</p>
+    }
+</div>

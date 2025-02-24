@@ -1,0 +1,300 @@
+﻿@model object
+@{
+    ViewData["Title"] = "Протипоказання";
+    var currentView = ViewBag.View as string;
+}
+
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="text-center">
+                <i class="fas fa-allergies text-danger me-2"></i>
+                Протипоказання дітей
+            </h2>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col">
+            <div class="btn-group w-100" role="group">
+                <a href="@Url.Action("GroupContraindications", "Cook", new { view = "all" })" 
+                   class="btn @(currentView == "all" ? "btn-primary" : "btn-outline-primary")">
+                    <i class="fas fa-list me-2"></i>Загальний список
+                </a>
+                <a href="@Url.Action("GroupContraindications", "Cook", new { view = "groups" })" 
+                   class="btn @(currentView == "groups" ? "btn-primary" : "btn-outline-primary")">
+                    <i class="fas fa-users me-2"></i>По групах
+                </a>
+                <button onclick="loadUniqueContraindications()" class="btn btn-outline-warning">
+                    <i class="fas fa-exclamation-circle me-2"></i>Унікальні протипоказання
+                </button>
+            </div>
+        </div>
+    </div>
+
+    @if (currentView == "all")
+    {
+        var allContraindications = Model as List<ChildContraindicationsViewModel>;
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>
+                                    <i class="fas fa-child text-primary me-2"></i>Дитина
+                                </th>
+                                <th>
+                                    <i class="fas fa-users text-success me-2"></i>Група
+                                </th>
+                                <th>
+                                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>Протипоказання
+                                </th>
+                                <th>
+                                    <i class="fas fa-ban text-danger me-2"></i>Заборонені продукти
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var child in allContraindications)
+                            {
+                                <tr>
+                                    <td>@child.ChildName</td>
+                                    <td>@child.GroupName</td>
+                                    <td>
+                                        @if (child.Contraindications.Any())
+                                        {
+                                            <ul class="list-unstyled mb-0">
+                                                @foreach (var contraindication in child.Contraindications)
+                                                {
+                                                    <li>
+                                                        <i class="fas fa-exclamation-circle text-warning me-2"></i>
+                                                        @contraindication
+                                                    </li>
+                                                }
+                                            </ul>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-success">
+                                                <i class="fas fa-check me-2"></i>Немає протипоказань
+                                            </span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (child.ForbiddenProducts.Any())
+                                        {
+                                            <ul class="list-unstyled mb-0">
+                                                @foreach (var product in child.ForbiddenProducts)
+                                                {
+                                                    <li>
+                                                        <i class="fas fa-times-circle text-danger me-2"></i>
+                                                        @product
+                                                    </li>
+                                                }
+                                            </ul>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-success">
+                                                <i class="fas fa-check me-2"></i>Немає заборонених продуктів
+                                            </span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        var groups = Model as List<GroupViewModel>;
+        <div class="row">
+            @foreach (var group in groups)
+            {
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-users text-primary me-2"></i>
+                                @group.Name
+                            </h5>
+                            <div class="card-text text-muted small mb-3">
+                                <ul class="list-unstyled">
+                                    <li>
+                                        <i class="fas fa-chalkboard-teacher me-2"></i>
+                                        Вихователь: @group.TeacherName
+                                    </li>
+                                    <li>
+                                        <i class="fas fa-child me-2"></i>
+                                        Кількість дітей: @group.CurrentCount
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="d-grid">
+                                <button class="btn btn-outline-primary" onclick="loadGroupDetails(@group.Id)">
+                                    <i class="fas fa-info-circle me-2"></i>Переглянути протипоказання
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<!-- Модальное окно для актуальных противопоказаний -->
+<div class="modal fade" id="currentContraindicationsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-circle text-warning me-2"></i>
+                    Актуальні протипоказання
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="currentContraindicationsList"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Модальное окно для уникальных противопоказаний -->
+<div class="modal fade" id="uniqueContraindicationsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-circle text-warning me-2"></i>
+                    Унікальні протипоказання та продукти
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="uniqueContraindicationsList"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для деталей группы -->
+<div class="modal fade" id="groupDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-info-circle text-primary me-2"></i>
+                    Протипоказання групи <span id="groupName"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="groupDetails"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // Функция загрузки уникальных противопоказаний
+    function loadUniqueContraindications() {
+    fetch('/Cook/GetUniqueContraindications')
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById('uniqueContraindicationsList').innerHTML = html;
+            const modal = new bootstrap.Modal(document.getElementById('uniqueContraindicationsModal'));
+            modal.show();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Помилка при завантаженні даних: ' + error.message);
+        });
+}
+
+function loadGroupDetails(groupId) {
+    if (!groupId) {
+        console.error('GroupId is not defined');
+        return;
+    }
+
+    fetch(`/Cook/GetGroupDetails/${groupId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.text();
+        })
+        .then(html => {
+            const modalElement = document.getElementById('groupDetailsModal');
+            const groupNameElement = document.getElementById('groupName');
+            const groupDetailsElement = document.getElementById('groupDetails');
+
+            if (!modalElement || !groupNameElement || !groupDetailsElement) {
+                throw new Error('Required DOM elements not found');
+            }
+
+            groupDetailsElement.innerHTML = html;
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Помилка при завантаженні даних: ' + error.message);
+        });
+}
+
+    // Функция загрузки текущих противопоказаний
+    function loadCurrentContraindications() {
+        fetch('/Cook/GetCurrentContraindications')
+            .then(response => response.json())
+            .then(data => {
+                let html = `
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Дитина</th>
+                                    <th>Група</th>
+                                    <th>Протипоказання</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+                
+                data.forEach(item => {
+                    html += `
+                        <tr>
+                            <td>${item.childName}</td>
+                            <td>${item.groupName}</td>
+                            <td>
+                                ${item.contraindications.map(c => 
+                                    `<div>
+                                        <i class="fas fa-exclamation-circle text-warning me-2"></i>
+                                        ${c}
+                                     </div>`
+                                ).join('')}
+                            </td>
+                        </tr>`;
+                });
+
+                html += '</tbody></table></div>';
+                
+                document.getElementById('currentContraindicationsList').innerHTML = html;
+                
+                const modal = new bootstrap.Modal(document.getElementById('currentContraindicationsModal'));
+                modal.show();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Помилка при завантаженні даних: ' + error.message);
+            });
+    }
+</script>
+}

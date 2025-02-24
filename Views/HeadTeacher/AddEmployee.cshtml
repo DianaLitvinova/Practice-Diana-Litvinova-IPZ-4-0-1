@@ -1,0 +1,49 @@
+﻿@model Diana_Litvinova_IPZ_4_0_1.Models.EmployeeViewModel
+
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h4>Додати співробітника</h4>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                <div class="mb-3">
+                    <label class="form-label">ПІБ</label>
+                    <input type="text" class="form-control" asp-for="FullName" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Телефон</label>
+                    <input type="tel" class="form-control" asp-for="Phone" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Посада</label>
+                    <select class="form-select" asp-for="Post" asp-items="ViewBag.Posts" required>
+                        <option value="">Виберіть посаду</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Ім'я користувача</label>
+                    <input type="text" class="form-control" asp-for="Username" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Пароль</label>
+                    <input type="password" class="form-control" asp-for="Password" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Підтвердження пароля</label>
+                    <input type="password" class="form-control" asp-for="ConfirmPassword" required>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="@Url.Action("Employees")" class="btn btn-secondary">Назад</a>
+                    <button type="submit" class="btn btn-primary">Додати</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

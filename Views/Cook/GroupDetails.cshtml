@@ -1,0 +1,124 @@
+﻿@model Diana_Litvinova_IPZ_4_0_1.Models.GroupViewModel
+@{
+    ViewData["Title"] = $"Група {Model.Name}";
+}
+
+<div class="container mt-4">
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <h2 class="card-title mb-4">
+                <i class="fas fa-users text-primary me-2"></i>
+                Група "@Model.Name"
+            </h2>
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2">
+                                <i class="fas fa-chalkboard-teacher text-primary me-2"></i>
+                                Вихователь
+                            </h6>
+                            <p class="card-text">@Model.TeacherName</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2">
+                                <i class="fas fa-users text-success me-2"></i>
+                                Наповненість
+                            </h6>
+                            <p class="card-text">@Model.CurrentCount / @Model.Capacity</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2">
+                                <i class="fas fa-money-bill text-warning me-2"></i>
+                                Вартість
+                            </h6>
+                            <p class="card-text">@Model.CurrentPrice.ToString("C2")</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h4 class="mb-3">
+                <i class="fas fa-list text-primary me-2"></i>
+                Список дітей та їх протипоказання
+            </h4>
+
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Дитина</th>
+                            <th>Сім'я</th>
+                            <th>Протипоказання</th>
+                            <th>Статус</th>
+                            <th>Відвідуваність</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var child in Model.Children)
+                        {
+                            <tr>
+                                <td>@child.FullName</td>
+                                <td>@child.FamilyName</td>
+                                <td>
+                                    @if (child.Contraindications.Any())
+                                    {
+                                        <ul class="list-unstyled mb-0">
+                                            @foreach (var contraindication in child.Contraindications)
+                                            {
+                                                <li>
+                                                    <i class="fas fa-exclamation-circle text-warning me-2"></i>
+                                                    @contraindication
+                                                </li>
+                                            }
+                                        </ul>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-success">
+                                            <i class="fas fa-check me-2"></i>Немає протипоказань
+                                        </span>
+                                    }
+                                </td>
+                                <td>
+                                    @switch (child.AttendanceStatus)
+                                    {
+                                        case "Присутній":
+                                            <span class="badge bg-success">@child.AttendanceStatus</span>
+                                            break;
+                                        case "Відсутній":
+                                            <span class="badge bg-danger">@child.AttendanceStatus</span>
+                                            break;
+                                        case "На лікарняному":
+                                            <span class="badge bg-warning">@child.AttendanceStatus</span>
+                                            break;
+                                        default:
+                                            <span class="badge bg-secondary">@child.AttendanceStatus</span>
+                                            break;
+                                    }
+                                </td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar @(child.AttendancePercentage >= 75 ? "bg-success" : child.AttendancePercentage >= 50 ? "bg-warning" : "bg-danger")" 
+                                             role="progressbar" 
+                                             style="width: @child.AttendancePercentage%;">
+                                            @child.AttendancePercentage.ToString("F1")%
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

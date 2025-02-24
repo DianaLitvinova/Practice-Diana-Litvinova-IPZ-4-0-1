@@ -1,0 +1,210 @@
+﻿@model IEnumerable<Diana_Litvinova_IPZ_4_0_1.Models.InvoiceExpenseReportViewModel>
+
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4>Звіт по закупівлям</h4>
+            <div class="d-flex gap-2">
+                <input type="date" class="form-control" id="startDate" value="@ViewBag.StartDate">
+                <input type="date" class="form-control" id="endDate" value="@ViewBag.EndDate">
+                <button class="btn btn-primary" onclick="generateReport()">
+                    <i class="fas fa-sync-alt me-2"></i>Показати
+                </button>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <!-- Статистика -->
+            <div class="row mb-3">
+                <div class="col-md-4 mb-2">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body py-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">Загальна сума витрат</h6>
+                                    <h4 class="mb-0">@Model.Sum(x => x.TotalAmount).ToString("C0")</h4>
+                                </div>
+                                <i class="fas fa-money-bill-wave fa-2x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-2">
+                    <div class="card bg-success text-white">
+                        <div class="card-body py-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">Середня сума накладної</h6>
+                                    <h4 class="mb-0">@(Model.Any() ? Model.Average(x => x.TotalAmount).ToString("C0") : "0")</h4>
+                                </div>
+                                <i class="fas fa-chart-line fa-2x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-2">
+                    <div class="card bg-info text-white">
+                        <div class="card-body py-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">Кількість накладних</h6>
+                                    <h4 class="mb-0">@Model.Count()</h4>
+                                </div>
+                                <i class="fas fa-file-invoice fa-2x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- График -->
+            <div class="card mb-3">
+                <div class="card-header py-2">
+                    <h5 class="mb-0">Динаміка витрат</h5>
+                </div>
+                <div class="card-body p-2" style="height: 250px;">
+                    <canvas id="expensesChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Таблица -->
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>№</th>
+                            <th>Дата</th>
+                            <th>Кухар</th>
+                            <th>Статус</th>
+                            <th>Сума</th>
+                            <th>Дії</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.InvoiceId</td>
+                                <td>@item.Date.ToString("dd.MM.yyyy HH:mm")</td>
+                                <td>@item.CookName</td>
+                                <td>
+                                    <span class="badge bg-@(item.Status == "Ухвалено" ? "success" :
+                                                         item.Status == "Відхилено" ? "danger" :
+                                                         "warning")">
+                                        @item.Status
+                                    </span>
+                                </td>
+                                <td>@item.TotalAmount.ToString("C0")</td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary" title="Показати товари"
+                                            onclick="showProducts('@item.ProductsList')">
+                                        <i class="fas fa-list"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для списка товаров -->
+<div class="modal fade" id="productsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Список товарів</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <ul class="list-group list-group-flush" id="productsList">
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        function generateReport() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            if (!startDate || !endDate) {
+                alert('Будь ласка, оберіть обидві дати');
+                return;
+            }
+
+            window.location.href = `/HeadTeacher/FinanceInvoiceExpensesReport?startDate=${startDate}&endDate=${endDate}`;
+        }
+
+        function showProducts(productsList) {
+            const productsListElement = document.getElementById('productsList');
+            productsListElement.innerHTML = '';
+
+            productsList.split(', ').forEach(product => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item';
+                li.textContent = product;
+                productsListElement.appendChild(li);
+            });
+
+            new bootstrap.Modal(document.getElementById('productsModal')).show();
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const chartData = @Html.Raw(ViewBag.ChartData);
+
+            new Chart(document.getElementById('expensesChart'), {
+                type: 'line',
+                data: {
+                    labels: chartData.map(x => x.date),
+                    datasets: [{
+                        label: 'Витрати',
+                        data: chartData.map(x => x.amount),
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1,
+                        fill: true,
+                        backgroundColor: 'rgba(75, 192, 192, 0.1)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    return `Сума: ${context.raw.toLocaleString('uk-UA', {
+                                        style: 'currency',
+                                        currency: 'UAH'
+                                    })}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function (value) {
+                                    return value.toLocaleString('uk-UA', {
+                                        style: 'currency',
+                                        currency: 'UAH',
+                                        maximumFractionDigits: 0
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+}

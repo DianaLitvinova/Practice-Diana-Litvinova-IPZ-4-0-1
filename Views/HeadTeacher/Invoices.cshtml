@@ -1,0 +1,127 @@
+﻿@model List<Diana_Litvinova_IPZ_4_0_1.Models.InvoiceViewModel>
+
+<div class="container mt-4">
+    @Html.AntiForgeryToken()
+   <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Накладні</h2>
+        <div>
+            <a asp-action="ManageProducts" class="btn btn-info me-2">
+                <i class="fas fa-box me-2"></i>Управління товарами
+            </a>
+            <a asp-action="CreateInvoice" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Створити накладну
+            </a>
+        </div>
+    </div>
+
+    <div class="table-responsive mt-4">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Номер</th>
+                    <th>Творець</th>
+                    <th>Дата створення</th>
+                    <th>Статус</th>
+                    <th>Сума</th>
+                    <th>Дії</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var invoice in Model)
+                {
+                    <tr>
+                        <td>@invoice.Id</td>
+                        <td>@invoice.CookName</td>
+                        <td>@invoice.DateCreate.ToString("dd.MM.yyyy HH:mm")</td>
+                        <td>
+                            <span class="badge @GetStatusBadgeClass(invoice.Status)">
+                                @invoice.Status
+                            </span>
+                        </td>
+                        <td>@invoice.TotalAmount.ToString("C")</td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="@Url.Action("InvoiceDetails", new { id = invoice.Id })" 
+                                   class="btn btn-sm btn-info" title="Деталі">
+                                    <i class="fas fa-info-circle"></i>
+                                </a>
+                                @if (invoice.Status == "Перевіряється")
+                                {
+                                    <button type="button" class="btn btn-sm btn-success" 
+                                            onclick="approveInvoice(@invoice.Id)" title="Прийняти">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-danger" 
+                                            onclick="rejectInvoice(@invoice.Id)" title="Відхилити">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@functions {
+    private string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "Перевіряється" => "bg-warning text-dark",
+            "Ухвалено" => "bg-success",
+            "Відхилено" => "bg-danger",
+            "Товар прийнятий" => "bg-info",
+            _ => "bg-secondary"
+        };
+    }
+}
+
+@section Scripts {
+    <script>
+        // Получаем токен из заголовка
+        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+        function approveInvoice(id) {
+            if (confirm('Підтвердити накладну?')) {
+                fetch(`/HeadTeacher/ApproveInvoice/${id}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': token
+                    }
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        location.reload();
+                    } else {
+                        alert('Помилка при підтвердженні накладної');
+                    }
+                });
+            }
+        }
+
+        function rejectInvoice(id) {
+            if (confirm('Відхилити накладну?')) {
+                fetch(`/HeadTeacher/RejectInvoice/${id}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': token
+                    }
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        location.reload();
+                    } else {
+                        alert('Помилка при відхиленні накладної');
+                    }
+                });
+            }
+        }
+    </script>
+}

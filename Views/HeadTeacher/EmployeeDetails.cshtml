@@ -1,0 +1,91 @@
+﻿@model EmployeeDetailsViewModel
+
+<div class="container mt-4">
+    <div class="mb-4">
+        <h2>@Model.FullName</h2>
+        <div class="text-muted">@Model.Phone</div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Поточна посада</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Посада:</strong> @Model.CurrentPost</p>
+                    <p><strong>Зарплата:</strong> @Model.CurrentSalary.ToString("C")</p>
+                    <p><strong>Дата прийняття:</strong> @Model.DateStart?.ToString("dd.MM.yyyy")</p>
+                    @if (Model.DateFinal.HasValue)
+                    {
+                        <p><strong>Дата звільнення:</strong> @Model.DateFinal?.ToString("dd.MM.yyyy")</p>
+                    }
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Історія посад</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Посада</th>
+                                    <th>Дата початку</th>
+                                    <th>Дата закінчення</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var post in Model.PostHistory)
+                                {
+                                    <tr>
+                                        <td>@post.Post</td>
+                                        <td>@post.DateStart.ToString("dd.MM.yyyy")</td>
+                                        <td>@post.DateFinal?.ToString("dd.MM.yyyy")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Премії та штрафи</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Сума</th>
+                                    <th>Опис</th>
+                                    <th>Дата</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var record in Model.BonusAndFines)
+                                {
+                                    <tr class="@(record.Amount > 0 ? "table-success" : "table-danger")">
+                                        <td>@record.Amount.ToString("C")</td>
+                                        <td>@record.Description</td>
+                                        <td>@record.DateAdd.ToString("dd.MM.yyyy")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a asp-action="Employees" class="btn btn-secondary">Назад</a>
+    </div>
+</div>

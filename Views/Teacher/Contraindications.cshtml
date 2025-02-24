@@ -1,0 +1,122 @@
+﻿@model TeacherContraindicationsViewModel
+@{
+    ViewData["Title"] = "Протипоказання";
+}
+
+<div class="container mt-4">
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <h2 class="mb-4">
+                <i class="fas fa-notes-medical text-danger me-2"></i>
+                Протипоказання дітей
+            </h2>
+
+            @if (Model.Groups.Any())
+            {
+                <div class="row mb-4">
+                    <div class="col">
+                        <div class="btn-group" role="group">
+                            @foreach (var group in Model.Groups)
+                            {
+                                <input type="radio" class="btn-check" name="groupBtn"
+                                       id="group_@group.GroupId" autocomplete="off"
+                                @(group == Model.Groups.First() ? "checked" : "")>
+                                <label class="btn btn-outline-primary" for="group_@group.GroupId">
+                                    @group.GroupName
+                                </label>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                @foreach (var group in Model.Groups)
+                {
+                    <div class="group-content" id="group_content_@group.GroupId"
+                         style="display: @(group == Model.Groups.First() ? "block" : "none")">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Дитина</th>
+                                        <th>Протипоказання</th>
+                                        <th>Заборонені продукти</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var child in group.Children)
+                                    {
+                                        <tr>
+                                            <td>@child.ChildName</td>
+                                            <td>
+                                                @if (child.Contraindications.Any())
+                                                {
+                                                    <ul class="list-unstyled mb-0">
+                                                        @foreach (var contra in child.Contraindications)
+                                                        {
+                                                            <li>
+                                                                <i class="fas fa-exclamation-circle text-warning me-2"></i>
+                                                                @contra.Name
+                                                            </li>
+                                                        }
+                                                    </ul>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-success">
+                                                        <i class="fas fa-check me-2"></i>
+                                                        Немає протипоказань
+                                                    </span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (child.ForbiddenProducts.Any())
+                                                {
+                                                    <ul class="list-unstyled mb-0">
+                                                        @foreach (var product in child.ForbiddenProducts)
+                                                        {
+                                                            <li>
+                                                                <i class="fas fa-ban text-danger me-2"></i>
+                                                                @product.Name
+                                                            </li>
+                                                        }
+                                                    </ul>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-success">
+                                                        <i class="fas fa-check me-2"></i>
+                                                        Немає заборонених продуктів
+                                                    </span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    У вас немає активних груп
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('[name="groupBtn"]').forEach(radio => {
+            radio.addEventListener('change', function () {
+                document.querySelectorAll('.group-content').forEach(content => {
+                    content.style.display = 'none';
+                });
+                document.getElementById('group_content_' + this.id.split('_')[1]).style.display = 'block';
+            });
+        });
+    </script>
+}

@@ -1,0 +1,537 @@
+﻿@model HeadTeacherGroupViewModel
+@{
+    ViewData["Title"] = "Групи дитячого садка";
+}
+
+<div class="container mt-4">
+    <!-- Заголовок и кнопки -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">
+            <i class="fas fa-users text-primary me-2"></i>
+            Групи дитячого садка
+        </h2>
+        <div class="btn-group">
+            <a href="@Url.Action("CreateGroup", "HeadTeacher")" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>
+                СТВОРИТИ ГРУПУ
+            </a>
+        </div>
+    </div>
+
+    <!-- Окно статистики -->
+    <div id="statisticsWindow" class="mb-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">Статистика відвідування груп</h5>
+                </div>
+
+                <div class="row mb-4">
+                    <!-- Фильтры -->
+                    <div class="col-md-3">
+                        <label class="form-label">Група</label>
+                        <select id="groupSelect" class="form-select">
+                            <option value="all">Всі групи</option>
+                            @foreach (var group in Model.Groups)
+                            {
+                                <option value="@group.Id" selected="@(group.Id == Model.SelectedGroupId)">
+                                    @group.Name
+                                </option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Період</label>
+                        <select id="periodSelect" class="form-select">
+                            <option value="day">День</option>
+                            <option value="week">Тиждень</option>
+                            <option value="month">Місяць</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Початкова дата</label>
+                        <input type="date" id="startDate" class="form-control"
+                               value="@Model.StartDate.ToString("yyyy-MM-dd")">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Кінцева дата</label>
+                        <input type="date" id="endDate" class="form-control"
+                               value="@Model.EndDate.ToString("yyyy-MM-dd")">
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col">
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="displayType" id="absolute" checked>
+                            <label class="btn btn-outline-primary" for="absolute">Кількість</label>
+
+                            <input type="radio" class="btn-check" name="displayType" id="percentage">
+                            <label class="btn btn-outline-primary" for="percentage">Відсотки</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="height: 400px">
+                    <canvas id="attendanceChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Карточки групп -->
+    <div class="row">
+        @foreach (var group in Model.Groups)
+        {
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">@group.Name</h5>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-outline-primary" onclick="editGroupName(@group.Id, '@group.Name')" title="Редагувати назву">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteGroup(@group.Id)" title="Видалити групу">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <small class="text-muted">Вихователь:</small>
+                                    <div>@group.TeacherName</div>
+                                </div>
+                                <button class="btn btn-sm btn-outline-primary"
+                                        onclick="changeTeacher(@group.Id, '@group.TeacherName')">
+                                    <i class="fas fa-exchange-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <small class="text-muted">Заповненість:</small>
+                            <div class="d-flex align-items-center mt-1">
+                                <div class="flex-grow-1 me-2">
+                                    <div class="progress" style="height: 10px;">
+                                        @{
+                                            var fillPercentage = (double)group.CurrentCount / group.Capacity * 100;
+                                            var segmentWidth = 100.0 / group.Capacity;
+                                        }
+                                        <div class="w-100 d-flex">
+                                            @for (int i = 0; i < group.Capacity; i++)
+                                            {
+                                                var isActive = i < group.CurrentCount;
+                                                <div class="flex-grow-1" style="width: @segmentWidth%">
+                                                    <div class="progress" style="height: 10px;">
+                                                        <div class="progress-bar @(fillPercentage >= 90 ? "bg-danger" : "bg-success")"
+                                                             role="progressbar"
+                                                             style="width: @(isActive ? "100%" : "0%");">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                @if (i < group.Capacity - 1)
+                                                {
+                                                    <div style="width: 1px; background-color: #fff;"></div>
+                                                }
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                                <span class="small">@group.CurrentCount / @group.Capacity</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <small class="text-muted">Вартість:</small>
+                                    <div>@group.CurrentPrice.ToString("C0")</div>
+                                </div>
+                                <button class="btn btn-sm btn-outline-primary"
+                                        onclick="updatePrice(@group.Id, @group.CurrentPrice)">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 d-flex justify-content-between align-items-center">
+                            <small class="text-muted">Відвідуваність:</small>
+                            <span>@group.AttendancePercentage.ToString("F1")%</span>
+                        </div>
+
+                        <button class="btn btn-primary w-100" onclick="showGroupStats(@group.Id)">
+                            <i class="fas fa-chart-line me-2"></i>
+                            Показати статистику
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Скрытое поле для списка учителей -->
+<select id="teachersList" style="display: none;">
+    @foreach (var teacher in Model.Teachers)
+    {
+        <option value="@teacher.Value">@teacher.Text</option>
+    }
+</select>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let chart = null;
+
+        function showStatisticsWindow() {
+            document.getElementById('statisticsWindow').style.display = 'block';
+            loadData();
+        }
+
+        function hideStatisticsWindow() {
+            document.getElementById('statisticsWindow').style.display = 'none';
+        }
+
+        function showGroupStats(groupId) {
+            document.getElementById('statisticsWindow').style.display = 'block';
+            document.getElementById('groupSelect').value = groupId;
+            document.getElementById('statisticsWindow').scrollIntoView({ behavior: 'smooth' });
+            loadData();
+        }
+
+        function editGroupName(groupId, currentName) {
+            const modalHtml = `
+                <div class="modal fade" id="editGroupNameModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Редагувати назву групи</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Нова назва:</label>
+                                    <input type="text" id="newGroupName" class="form-control" value="${currentName}" />
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                                <button type="button" class="btn btn-primary" onclick="saveGroupName(${groupId})">Зберегти</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const oldModal = document.getElementById('editGroupNameModal');
+            if (oldModal) oldModal.remove();
+
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            const modal = new bootstrap.Modal(document.getElementById('editGroupNameModal'));
+            modal.show();
+        }
+
+        function saveGroupName(groupId) {
+            const newName = document.getElementById('newGroupName').value;
+            if (!newName.trim()) {
+                alert('Назва групи не може бути порожньою');
+                return;
+            }
+
+            fetch('/HeadTeacher/UpdateGroupName', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `groupId=${groupId}&name=${encodeURIComponent(newName)}`
+            })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        location.reload();
+                    } else {
+                        alert(result.message || 'Помилка при зміні назви групи');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Помилка при зміні назви групи');
+                });
+        }
+
+        function deleteGroup(groupId) {
+            if (!confirm('Ви впевнені, що хочете видалити цю групу?')) {
+                return;
+            }
+
+            fetch('/HeadTeacher/DeleteGroup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `groupId=${groupId}`
+            })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        location.reload();
+                    } else {
+                        alert(result.message || 'Помилка при видаленні групи');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Помилка при видаленні групи');
+                });
+        }
+
+        function updateChart(data, isPercentage) {
+            const ctx = document.getElementById('attendanceChart').getContext('2d');
+
+            if (chart) {
+                chart.destroy();
+            }
+
+            if (!data || !data.labels || data.labels.length === 0) {
+                return;
+            }
+
+            const datasets = [];
+            const total = data.labels.map((_, i) =>
+                Math.max(1, data.present[i] + data.absent[i] + data.sick[i] + data.weekend[i]));
+
+            const calculateValue = (value, index) => {
+                if (isPercentage) {
+                    return total[index] > 0 ? (value / total[index] * 100) : 0;
+                }
+                return value;
+            };
+
+            datasets.push({
+                label: 'Присутні',
+                data: data.present.map((value, i) => calculateValue(value, i)),
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                fill: true
+            });
+
+            datasets.push({
+                label: 'Відсутні',
+                data: data.absent.map((value, i) => calculateValue(value, i)),
+                borderColor: 'rgb(255, 99, 132)',
+                backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                fill: true
+            });
+
+            datasets.push({
+                label: 'На лікарняному',
+                data: data.sick.map((value, i) => calculateValue(value, i)),
+                borderColor: 'rgb(255, 205, 86)',
+                backgroundColor: 'rgba(255, 205, 86, 0.5)',
+                fill: true
+            });
+
+            datasets.push({
+                label: 'Вихідний',
+                data: data.weekend.map((value, i) => calculateValue(value, i)),
+                borderColor: 'rgb(54, 162, 235)',
+                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                fill: true
+            });
+
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Статистика відвідування'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: isPercentage ? 100 : undefined,
+                            title: {
+                                display: true,
+                                text: isPercentage ? 'Відсоток' : 'Кількість дітей'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Загрузка данных
+        async function loadData() {
+            const groupSelect = document.getElementById('groupSelect');
+            const groupId = groupSelect.value === 'all' ? 'all' : groupSelect.value;
+            const period = document.getElementById('periodSelect').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const isPercentage = document.getElementById('percentage').checked;
+
+            try {
+                const response = await fetch(`/HeadTeacher/GetAttendanceData?groupId=${groupId}&period=${period}&startDate=${startDate}&endDate=${endDate}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                updateChart(data, isPercentage);
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Помилка завантаження даних');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // Инициализация тултипов
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Обработчики фильтров
+            ['groupSelect', 'periodSelect', 'startDate', 'endDate'].forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.addEventListener('change', loadData);
+                }
+            });
+
+            document.querySelectorAll('input[name="displayType"]').forEach(radio => {
+                radio.addEventListener('change', loadData);
+            });
+
+            // Загрузка данных при загрузке страницы
+            loadData();
+        });
+
+        function changeTeacher(groupId, currentTeacher) {
+            const modalHtml = `
+                        <div class="modal fade" id="changeTeacherModal" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Змінити вихователя групи</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <select id="newTeacherId" class="form-select">
+                                            ${Array.from(document.getElementById('teachersList').options)
+                    .map(opt => `<option value="${opt.value}" ${opt.text === currentTeacher ? 'selected' : ''}>${opt.text}</option>`)
+                    .join('')}
+                                        </select>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                                        <button type="button" class="btn btn-primary" onclick="updateTeacher(${groupId})">Зберегти</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+            const oldModal = document.getElementById('changeTeacherModal');
+            if (oldModal) oldModal.remove();
+
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            const modal = new bootstrap.Modal(document.getElementById('changeTeacherModal'));
+            modal.show();
+        }
+
+        async function updateTeacher(groupId) {
+            const teacherId = document.getElementById('newTeacherId').value;
+            try {
+                const response = await fetch('/HeadTeacher/UpdateGroupTeacher', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `groupId=${groupId}&teacherId=${teacherId}`
+                });
+                const result = await response.json();
+                if (result.success) {
+                    location.reload();
+                } else {
+                    alert('Помилка при зміні вихователя');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Помилка при зміні вихователя');
+            }
+        }
+
+        function updatePrice(groupId, currentPrice) {
+            const modalHtml = `
+                        <div class="modal fade" id="updatePriceModal" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Змінити вартість</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <label class="form-label">Нова вартість:</label>
+                                            <input type="number" id="newPrice" class="form-control"
+                                                   value="${currentPrice}" step="0.01" min="0" />
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                                        <button type="button" class="btn btn-primary" onclick="saveNewPrice(${groupId})">Зберегти</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+            const oldModal = document.getElementById('updatePriceModal');
+            if (oldModal) oldModal.remove();
+
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            const modal = new bootstrap.Modal(document.getElementById('updatePriceModal'));
+            modal.show();
+        }
+
+        async function saveNewPrice(groupId) {
+            const price = document.getElementById('newPrice').value;
+            try {
+                const response = await fetch('/HeadTeacher/UpdateGroupPrice', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `groupId=${groupId}&price=${price}`
+                });
+                const result = await response.json();
+                if (result.success) {
+                    location.reload();
+                } else {
+                    alert('Помилка при зміні вартості');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Помилка при зміні вартості');
+            }
+        }
+    </script>
+}

@@ -1,0 +1,112 @@
+﻿@model Diana_Litvinova_IPZ_4_0_1.Models.GroupViewModel
+
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="mb-0">Група "@Model.Name"</h4>
+                    <small class="text-muted">Вихователь: @Model.TeacherName</small>
+                </div>
+                <a href="@Url.Action("Groups")" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left me-2"></i>До списку груп
+                </a>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <!-- Статистика -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body py-2">
+                            <h6 class="mb-1">Заповненість</h6>
+                            <h4 class="mb-0">@Model.CurrentCount / @Model.Capacity</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body py-2">
+                            <h6 class="mb-1">Вартість</h6>
+                            <h4 class="mb-0">@Model.CurrentPrice.ToString("C0")</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body py-2">
+                            <h6 class="mb-1">Відвідуваність</h6>
+                            <h4 class="mb-0">@Model.AttendancePercentage.ToString("F1")%</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body py-2">
+                            <h6 class="mb-1">Протипоказання</h6>
+                            <h4 class="mb-0">@Model.Children.Count(c => c.Contraindications.Any())</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Таблица детей -->
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Дитина</th>
+                            <th>Сім'я</th>
+                            <th>Дата початку</th>
+                            <th>Відвідуваність</th>
+                            <th>Протипоказання</th>
+                            <th>Статус</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var child in Model.Children)
+                        {
+                            <tr>
+                                <td>@child.FullName</td>
+                                <td>@child.FamilyName</td>
+                                <td>@child.StartDate.ToString("dd.MM.yyyy")</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress flex-grow-1" style="height: 10px;">
+                                            <div class="progress-bar bg-info"
+                                                 role="progressbar"
+                                                 style="width: @child.AttendancePercentage%">
+                                            </div>
+                                        </div>
+                                        <span class="ms-2">@child.AttendancePercentage.ToString("F1")%</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    @if (child.Contraindications.Any())
+                                    {
+                                        <div class="d-flex gap-1">
+                                            @foreach (var contra in child.Contraindications)
+                                            {
+                                                <span class="badge bg-warning">@contra</span>
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Немає</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="badge bg-@(child.AttendanceStatus == "Присутній" ? "success" : "secondary")">
+                                        @child.AttendanceStatus
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

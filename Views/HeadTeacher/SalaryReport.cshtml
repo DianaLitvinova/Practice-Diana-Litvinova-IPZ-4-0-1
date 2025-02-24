@@ -1,0 +1,151 @@
+﻿@model IEnumerable<Diana_Litvinova_IPZ_4_0_1.Models.SalaryReportViewModel>
+
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4>Звіт по зарплатам</h4>
+            <div class="d-flex gap-2">
+                <select class="form-select" id="periodType" style="width: 150px;">
+                    <option value="month">По місяцях</option>
+                    <option value="quarter">По кварталах</option>
+                    <option value="year">По роках</option>
+                </select>
+                <input type="date" class="form-control" id="startDate" value="@ViewBag.StartDate">
+                <input type="date" class="form-control" id="endDate" value="@ViewBag.EndDate">
+                <button class="btn btn-primary" onclick="generateReport()">
+                    <i class="fas fa-sync-alt me-2"></i>Показати
+                </button>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <!-- Карточки с ключевыми метриками -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <h6>Фонд оплати праці</h6>
+                            <h3>@ViewBag.TotalSalaryFund.ToString("C")</h3>
+                            <small>@ViewBag.SalaryFundChange% до попереднього періоду</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <h6>Середня зарплата</h6>
+                            <h3>@ViewBag.AverageSalary.ToString("C")</h3>
+                            <small>По всім посадам</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <h6>Преміальний фонд</h6>
+                            <h3>@ViewBag.TotalBonuses.ToString("C")</h3>
+                            <small>@ViewBag.BonusesPercentage% від фонду</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning">
+                        <div class="card-body">
+                            <h6>Ефективність витрат</h6>
+                            <h3>@ViewBag.EfficiencyRatio%</h3>
+                            <small>Співвідношення до доходів</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Основные графики -->
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Динаміка витрат на персонал</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="salaryTrendsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Розподіл по відділах</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="departmentChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Дополнительная аналитика -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Співвідношення базової та змінної частини</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="salaryStructureChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Ефективність премій</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="bonusEfficiencyChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Таблица детализации -->
+            <div class="table-responsive mt-4">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Співробітник</th>
+                            <th>Посада</th>
+                            <th>Базова ставка</th>
+                            <th>Премії</th>
+                            <th>Штрафи</th>
+                            <th>Всього</th>
+                            <th>Динаміка</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.EmployeeName</td>
+                                <td>@item.Position</td>
+                                <td>@item.BaseSalary.ToString("C")</td>
+                                <td class="text-success">
+                                    @((item.BonusesAndFines > 0 ? item.BonusesAndFines : 0).ToString("C"))
+                                </td>
+                                <td class="text-danger">
+                                    @((item.BonusesAndFines < 0 ? -item.BonusesAndFines : 0).ToString("C"))
+                                </td>
+                                <td>@item.TotalSalary.ToString("C")</td>
+                                <td>
+                                    <small class="@(ViewBag.EmployeeChanges[item.EmployeeName] >= 0 ? "text-success" : "text-danger")">
+                                        @ViewBag.EmployeeChanges[item.EmployeeName]%
+                                        <i class="fas fa-@(ViewBag.EmployeeChanges[item.EmployeeName] >= 0 ? "arrow-up" : "arrow-down")"></i>
+                                    </small>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

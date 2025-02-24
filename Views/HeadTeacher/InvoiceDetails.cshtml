@@ -1,0 +1,112 @@
+﻿@model Diana_Litvinova_IPZ_4_0_1.Models.InvoiceViewModel
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Деталі накладної #@Model.Id</h2>
+        <a asp-action="Invoices" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Повернутися до списку
+        </a>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5 class="card-title">Основна інформація</h5>
+                    <dl class="row">
+                        <dt class="col-sm-4">Створено</dt>
+                        <dd class="col-sm-8">@Model.DateCreate.ToString("dd.MM.yyyy HH:mm")</dd>
+
+                        <dt class="col-sm-4">Статус</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge @GetStatusBadgeClass(Model.Status)">
+                                @Model.Status
+                            </span>
+                        </dd>
+
+                        <dt class="col-sm-4">Кухар</dt>
+                        <dd class="col-sm-8">@Model.CookName</dd>
+
+                        @if (Model.HeadTeacherName != null)
+                        {
+                            <dt class="col-sm-4">Завідуючий</dt>
+                            <dd class="col-sm-8">@Model.HeadTeacherName</dd>
+                            <dt class="col-sm-4">Дата перевірки</dt>
+                            <dd class="col-sm-8">@Model.DateAccept?.ToString("dd.MM.yyyy HH:mm")</dd>
+                        }
+
+                        @if (Model.ReceiverName != null)
+                        {
+                            <dt class="col-sm-4">Отримувач</dt>
+                            <dd class="col-sm-8">@Model.ReceiverName</dd>
+                            <dt class="col-sm-4">Дата отримання</dt>
+                            <dd class="col-sm-8">@Model.DateReceipt?.ToString("dd.MM.yyyy HH:mm")</dd>
+                        }
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Список товарів</h5>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Назва</th>
+                            <th>Одиниця виміру</th>
+                            <th>Кількість</th>
+                            <th>Фактична кількість</th>
+                            <th>Ціна</th>
+                            <th>Сума</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var product in Model.Products)
+                        {
+                            <tr>
+                                <td>@product.ProductName</td>
+                                <td>@product.Measure</td>
+                                <td>@product.Amount</td>
+                                <td>@(product.ActualAmount?.ToString() ?? "-")</td>
+                                <td>@(product.Cost?.ToString("C") ?? "-")</td>
+                                <td>
+                                    @if (product.ActualAmount.HasValue && product.Cost.HasValue)
+                                    {
+                                        @((product.ActualAmount.Value * product.Cost.Value).ToString("C"))
+                                    }
+                                    else
+                                    {
+                                        @:-
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="5" class="text-end"><strong>Загальна сума:</strong></td>
+                            <td><strong>@Model.TotalAmount.ToString("C")</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    private string GetStatusBadgeClass(string status)
+    {
+        return status switch
+        {
+            "Перевіряється" => "bg-warning text-dark",
+            "Ухвалено" => "bg-success",
+            "Відхилено" => "bg-danger",
+            "Товар прийнятий" => "bg-info",
+            _ => "bg-secondary"
+        };
+    }
+}

@@ -1,0 +1,188 @@
+﻿@model Diana_Litvinova_IPZ_4_0_1.Models.FamilySearchViewModel
+
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-child text-primary me-2"></i>
+                    Управління дітьми
+                </h2>
+@*                 <a asp-controller="HeadTeacher" asp-action="CreateFamily" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>
+                    Додати нову сім'ю
+                </a> *@
+            </div>
+
+            <!-- Фильтры -->
+            <form method="get" class="row mb-4">
+                <div class="col-md-5">
+                    <input type="text" class="form-control"
+                           name="searchTerm"
+                           value="@Model.SearchTerm"
+                           placeholder="Пошук за ім'ям дитини або відповідальної особи...">
+                </div>
+                <div class="col-md-5">
+                    <select name="groupId" class="form-select">
+                        <option value="">Всі групи</option>
+                        @foreach (var group in Model.Groups)
+                        {
+                            <option value="@group.Id" selected="@(group.Id == Model.SelectedGroupId)">
+                                @group.Name
+                            </option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search me-2"></i>Пошук
+                    </button>
+                </div>
+            </form>
+
+            <!-- Список детей -->
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ПІБ дитини</th>
+                            <th>Група</th>
+                            <th>Вихователь</th>
+                            <th>Відповідальна особа</th>
+                            <th>Дата початку</th>
+                            <th>Протипоказання</th>
+                            <th>Дії</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var child in Model.Children)
+                        {
+                            <tr data-child-id="@child.Id">
+                                <td>@child.FullName</td>
+                                <td data-group-id="@Model.Groups.FirstOrDefault(g => g.Name == child.GroupName)?.Id">@child.GroupName</td>
+                                <td>@child.TeacherName</td>
+                                <td>
+                                    <div>@child.MainResponsibleName</div>
+                                    <small>@child.MainResponsiblePhone</small>
+                                </td>
+                                <td>@child.StartDate.ToString("dd.MM.yyyy")</td>
+                                <td>
+                                    @if (child.Contraindications.Any())
+                                    {
+                                        foreach (var contra in child.Contraindications)
+                                        {
+                                            <div class="badge bg-warning text-dark mb-1">@contra</div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">Немає</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="btn-group">
+                                        <button class="btn btn-sm btn-outline-primary" onclick="viewDetails(@child.Id)" title="Деталі">
+                                            <i class="fas fa-info-circle"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-success" onclick="transferChild(@child.Id)" title="Перевести">
+                                            <i class="fas fa-exchange-alt"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="transferModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-exchange-alt text-primary me-2"></i>
+                    Переведення дитини в іншу групу
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="newGroupSelect" class="form-label">Оберіть нову групу:</label>
+                    <select class="form-select" id="newGroupSelect">
+                        @foreach (var group in Model.Groups)
+                        {
+                            <option value="@group.Id">@group.Name</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Скасувати
+                </button>
+                <button type="button" class="btn btn-primary" onclick="confirmTransfer()">
+                    <i class="fas fa-check me-2"></i>Підтвердити
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchForm = document.querySelector('form');
+            if (searchForm) {
+                searchForm.addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    const searchTerm = this.querySelector('input[name="searchTerm"]').value;
+                    const groupId = this.querySelector('select[name="groupId"]').value;
+                    window.location.href = `/HeadTeacher/Children?searchTerm=${encodeURIComponent(searchTerm)}&groupId=${groupId}`;
+                });
+            }
+        });
+
+        function viewDetails(childId) {
+            window.location.href = `/HeadTeacher/ChildDetails/${childId}`;
+        }
+
+        let currentChildGroup = null;
+
+        function transferChild(childId) {
+            const modal = new bootstrap.Modal(document.getElementById('transferModal'));
+            window.selectedChildId = childId;
+            modal.show();
+        }
+
+        function confirmTransfer() {
+            const newGroupId = document.getElementById('newGroupSelect').value;
+
+            fetch('/HeadTeacher/TransferChild', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    childId: window.selectedChildId,
+                    newGroupId: parseInt(newGroupId)
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert(data.message || 'Помилка при переведенні дитини в іншу групу');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Помилка при переведенні дитини');
+                });
+        }
+    </script>
+}

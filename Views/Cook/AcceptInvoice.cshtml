@@ -1,0 +1,67 @@
+﻿@model List<InvoiceViewModel>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Прийняття товару</h2>
+        <a asp-action="Index" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Повернутися
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>№</th>
+                            <th>Дата створення</th>
+                            <th>Кухар</th>
+                            <th>Завідуючий</th>
+                            <th>Дата підтвердження</th>
+                            <th>Сума</th>
+                            <th>Статус</th>
+                            <th>Дії</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var invoice in Model)
+                        {
+                            <tr>
+                                <td>@invoice.Id</td>
+                                <td>@invoice.DateCreate.ToString("dd.MM.yyyy HH:mm")</td>
+                                <td>@invoice.CookName</td>
+                                <td>@invoice.HeadTeacherName</td>
+                                <td>@(invoice.DateAccept?.ToString("dd.MM.yyyy HH:mm") ?? "-")</td>
+                                <td>@invoice.TotalAmount.ToString("C")</td>
+                                <td>
+                                    <span class="badge @GetStatusBadgeClass(invoice.Status)">
+                                        @invoice.Status
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="@Url.Action("AcceptInvoiceDetails", new { id = invoice.Id })" 
+                                       class="btn btn-sm btn-primary">
+                                        <i class="fas fa-check me-2"></i>Прийняти
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    private string GetStatusBadgeClass(string status) =>
+        status switch
+        {
+            "Перевіряється" => "bg-warning text-dark",
+            "Ухвалено" => "bg-success",
+            "Відхилено" => "bg-danger",
+            "Товар прийнятий" => "bg-info",
+            _ => "bg-secondary"
+        };
+}
